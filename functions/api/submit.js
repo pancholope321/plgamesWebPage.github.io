@@ -1,11 +1,13 @@
 export async function onRequest(context) {
   const { request, env } = context;
   
-  // Get the Referer/Origin header
-  const referer = request.headers.get('Referer') || request.headers.get('Referer') || '';
+  // Get the Referer/Origin header (case-insensitive)
+  const referer = request.headers.get('Referer') || request.headers.get('referer') || '';
   const origin = request.headers.get('Origin') || request.headers.get('origin') || '';
   
-  // CORS headers - set these FIRST
+  console.log("Headers received - Referer:", referer, "Origin:", origin);
+  
+  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -18,19 +20,62 @@ export async function onRequest(context) {
     return new Response(null, { headers });
   }
   
-  // Simple domain check - just check if it contains itch.io
-  // Comment out strict checking temporarily for debugging
-  const containsItchIO = referer.includes('itch.io') || origin.includes('itch.io');
+  // Domain checking - FIXED VERSION
+  const ALLOWED_DOMAINS = [
+    'itch.io',
+    'itch.io/',
+    'pancholope321.itch.io',
+    'pancholope321.itch.io/'
+  ];
   
-  // Only enable this check after everything works
-
-  if (!containsItchIO && !referer.includes('localhost') && !origin.includes('localhost')) {
+  // Check if request comes from an allowed domain
+  let isAllowed = false;
+  let matchedDomain = '';
+  
+  // Check both referer and origin
+  const checkUrl = referer || origin;
+  
+  if (checkUrl) {
+    try {
+      const url = new URL(checkUrl);
+      const hostname = url.hostname;
+      
+      // Check if hostname ends with any allowed domain
+      isAllowed = ALLOWED_DOMAINS.some(domain => {
+        if (hostname === domain || hostname.endsWith('.' + domain) || hostname.includes(domain)) {
+          matchedDomain = domain;
+          return true;
+        }
+        return false;
+      });
+      
+      console.log("Domain check - Hostname:", hostname, "Is allowed:", isAllowed, "Matched:", matchedDomain);
+      
+    } catch (e) {
+      console.log("Failed to parse URL:", checkUrl, "Error:", e.message);
+      // Continue without domain check if URL is malformed
+    }
+  }
+  
+  // For testing, allow localhost and empty referer (direct API calls)
+  const isLocalhost = checkUrl.includes('localhost') || checkUrl.includes('127.0.0.1');
+  const isEmptyReferer = !referer && !origin; // Direct API call or browser extension
+  
+  // Comment out for production, uncomment for testing
+  // const allowTest = true; // Set to false in production
+  
+  if (!isAllowed && !isLocalhost && !isEmptyReferer) {
     return new Response(
       JSON.stringify({ 
         error: 'Unauthorized: Only itch.io games can submit scores',
-        referer: referer,
-        origin: origin,
-        hint: 'Make sure your game is hosted on itch.io'
+        details: {
+          referer: referer,
+          origin: origin,
+          checkUrl: checkUrl,
+          matchedDomain: matchedDomain,
+          isAllowed: isAllowed
+        },
+        hint: 'Your game must be hosted on itch.io to submit scores. If testing locally, use localhost.'
       }), 
       { 
         status: 403,
@@ -38,8 +83,8 @@ export async function onRequest(context) {
       }
     );
   }
- 
   
+  // Rest of your code remains the same...
   // Only allow POST method
   if (request.method !== 'POST') {
     return new Response(
