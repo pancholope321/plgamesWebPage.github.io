@@ -9,7 +9,7 @@ export async function onRequest(context) {
   const ALLOWED_DOMAINS = [
     'https://itch.io',
     'https://*.itch.io',
-    'https://itch.io:443'
+    'https://pancholope321.itch.io/money-sweeper'
   ];
   
   // Check if the request comes from an allowed domain
