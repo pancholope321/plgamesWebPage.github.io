@@ -3,9 +3,10 @@ export async function onRequest(context) {
   
   // CORS headers
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://www.plgames.cl',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+	'Access-Control-Allow-Credentials': 'true'
   };
   
   if (request.method === 'OPTIONS') {
