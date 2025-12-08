@@ -1,14 +1,10 @@
 # wrangler.toml
 name = "plgames"
 compatibility_date = "2024-01-01"
-pages_build_output_dir = "/public"
+pages_build_output_dir = "./public"
 
 # For D1 Database (if using)
 [[d1_databases]]
 binding = "DB"
 database_name = "money_sweeper"
 database_id = "2ae4a930-d62e-426a-a953-77a763e45b54" 
-
-[[pages]]
-name = "plgames"
-production_branch = "main"
