@@ -23,7 +23,7 @@ export async function onRequest(context) {
   const containsItchIO = referer.includes('itch.io') || origin.includes('itch.io');
   
   // Only enable this check after everything works
-  /*
+
   if (!containsItchIO && !referer.includes('localhost') && !origin.includes('localhost')) {
     return new Response(
       JSON.stringify({ 
@@ -38,7 +38,7 @@ export async function onRequest(context) {
       }
     );
   }
-  */
+ 
   
   // Only allow POST method
   if (request.method !== 'POST') {
