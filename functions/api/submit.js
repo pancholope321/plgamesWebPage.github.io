@@ -81,7 +81,7 @@ export async function onRequest(context) {
     }
     
     // Trim and limit name length
-    const trimmedName = name.trim().substring(0, 30);
+    const trimmedName = name.trim().substring(0, 12);
     const scoreNum = parseInt(score);
     
     console.log("Inserting score:", trimmedName, scoreNum);
