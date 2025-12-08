@@ -2,49 +2,10 @@ export async function onRequest(context) {
   const { request, env } = context;
   
   // Get the Referer/Origin header
-  const referer = request.headers.get('Referer') || '';
-  const origin = request.headers.get('Origin') || '';
+  const referer = request.headers.get('Referer') || request.headers.get('Referer') || '';
+  const origin = request.headers.get('Origin') || request.headers.get('origin') || '';
   
-  // List of allowed itch.io domains (more comprehensive)
-  const ALLOWED_DOMAINS = [
-    'https://itch.io',
-    'https://*.itch.io',
-    'https://pancholope321.itch.io/money-sweeper'
-  ];
-  
-  // Check if the request comes from an allowed domain
-  const isAllowed = ALLOWED_DOMAINS.some(domain => {
-    // Handle wildcards
-    if (domain.includes('*')) {
-      // Replace * with .* for regex, escape other regex characters
-      const escapedDomain = domain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '.*');
-      const regex = new RegExp('^' + escapedDomain);
-      return regex.test(referer) || regex.test(origin);
-    }
-    // For domains without wildcards, check if starts with
-    return referer.startsWith(domain) || origin.startsWith(domain);
-  });
-  
-  // Special case: also allow if it contains 'itch.io' anywhere in the domain
-  const containsItchIO = referer.includes('itch.io') || origin.includes('itch.io');
-  
-  if (!isAllowed && !containsItchIO) {
-    return new Response(
-      JSON.stringify({ 
-        error: 'Unauthorized: Only itch.io games can submit scores',
-        hint: 'Your game must be hosted on itch.io to submit scores'
-      }), 
-      { 
-        status: 403,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      }
-    );
-  }
-  
-  // CORS headers
+  // CORS headers - set these FIRST
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -56,6 +17,28 @@ export async function onRequest(context) {
   if (request.method === 'OPTIONS') {
     return new Response(null, { headers });
   }
+  
+  // Simple domain check - just check if it contains itch.io
+  // Comment out strict checking temporarily for debugging
+  const containsItchIO = referer.includes('itch.io') || origin.includes('itch.io');
+  
+  // Only enable this check after everything works
+  /*
+  if (!containsItchIO && !referer.includes('localhost') && !origin.includes('localhost')) {
+    return new Response(
+      JSON.stringify({ 
+        error: 'Unauthorized: Only itch.io games can submit scores',
+        referer: referer,
+        origin: origin,
+        hint: 'Make sure your game is hosted on itch.io'
+      }), 
+      { 
+        status: 403,
+        headers: headers
+      }
+    );
+  }
+  */
   
   // Only allow POST method
   if (request.method !== 'POST') {
@@ -70,7 +53,10 @@ export async function onRequest(context) {
   
   try {
     // Parse the JSON body
-    const { name, score } = await request.json();
+    const body = await request.text();
+    console.log("Received body:", body);
+    
+    const { name, score } = JSON.parse(body);
     
     // Validate input
     if (!name || name.trim() === '') {
@@ -95,26 +81,33 @@ export async function onRequest(context) {
     
     // Trim and limit name length
     const trimmedName = name.trim().substring(0, 30);
+    const scoreNum = parseInt(score);
+    
+    console.log("Inserting score:", trimmedName, scoreNum);
     
     // Insert the score into database
     const insertResult = await env.DB.prepare(
       'INSERT INTO scores (name, score) VALUES (?, ?)'
-    ).bind(trimmedName, parseInt(score)).run();
+    ).bind(trimmedName, scoreNum).run();
     
-    // Get the player's rank (players with higher scores)
+    console.log("Insert result:", insertResult);
+    
+    // Get the player's rank
     const rankResult = await env.DB.prepare(`
       SELECT COUNT(*) + 1 as rank 
       FROM scores 
       WHERE score > ?
-    `).bind(parseInt(score)).first();
+    `).bind(scoreNum).first();
+    
+    console.log("Rank result:", rankResult);
     
     // Return success response
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Score submitted successfully!',
-        rank: rankResult.rank,
-        id: insertResult.meta.last_row_id
+        rank: rankResult ? rankResult.rank : 1,
+        id: insertResult.meta ? insertResult.meta.last_row_id : null
       }), 
       { 
         status: 200,
@@ -123,10 +116,12 @@ export async function onRequest(context) {
     );
     
   } catch (error) {
+    console.error("Error in onRequest:", error);
     return new Response(
       JSON.stringify({ 
         error: 'Failed to submit score',
-        details: error.message 
+        details: error.message,
+        stack: error.stack 
       }), 
       { 
         status: 500, 
