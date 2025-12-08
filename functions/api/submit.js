@@ -21,10 +21,10 @@ export async function onRequest(context) {
   // Simple domain check - just check if it contains itch.io
   // Comment out strict checking temporarily for debugging
   console.log("this is the referer: ",referer)
-  const containsItchIO = referer.includes('itch.io') || origin.includes('itch.io');
+  const containsItchIO = referer.includes('itch.zone') || origin.includes('itch.zone');
   
   // Only enable this check after everything works
-  /*
+  
   if (!containsItchIO && !referer.includes('localhost') && !origin.includes('localhost')) {
     return new Response(
       JSON.stringify({ 
@@ -39,7 +39,7 @@ export async function onRequest(context) {
       }
     );
   }
-  */
+  
   
   // Only allow POST method
   if (request.method !== 'POST') {
