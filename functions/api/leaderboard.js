@@ -4,33 +4,36 @@ export async function onRequest(context) {
   
   // CORS headers
   const headers = {
-    'Access-Control-Allow-Origin': '*', // Change to your domain if needed
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json'
   };
   
-  // Handle OPTIONS preflight
   if (request.method === 'OPTIONS') {
     return new Response(null, { headers });
   }
   
-  // Only allow GET method
   if (request.method !== 'GET') {
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }), 
-      { 
-        status: 405, 
-        headers 
-      }
+      { status: 405, headers }
     );
   }
   
   try {
-    // Get limit from query parameter, default to 10
-    const limit = parseInt(url.searchParams.get('limit')) || 10;
+    // Get pagination parameters
+    const page = Math.max(parseInt(url.searchParams.get('page')) || 1, 1);
+    const pageSize = Math.min(parseInt(url.searchParams.get('pageSize')) || 10, 100);
+    const offset = (page - 1) * pageSize;
     
-    // Fetch top scores from database
+    // Get total count
+    const totalCountResult = await env.DB.prepare(
+      'SELECT COUNT(*) as total FROM scores'
+    ).first();
+    const totalCount = totalCountResult ? totalCountResult.total : 0;
+    
+    // Fetch paginated scores with global ranking
     const { results } = await env.DB.prepare(`
       SELECT 
         id,
@@ -40,10 +43,10 @@ export async function onRequest(context) {
         ROW_NUMBER() OVER (ORDER BY score DESC) as rank
       FROM scores 
       ORDER BY score DESC 
-      LIMIT ?
-    `).bind(limit).all();
+      LIMIT ? OFFSET ?
+    `).bind(pageSize, offset).all();
     
-    // Format the response
+    // Format response
     const leaderboard = results.map(row => ({
       id: row.id,
       rank: row.rank,
@@ -53,9 +56,22 @@ export async function onRequest(context) {
       date: new Date(row.timestamp).toLocaleDateString()
     }));
     
-    // Return the leaderboard
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / pageSize);
+    
     return new Response(
-      JSON.stringify(leaderboard), 
+      JSON.stringify({
+        success: true,
+        data: leaderboard,
+        pagination: {
+          page: page,
+          pageSize: pageSize,
+          total: totalCount,
+          totalPages: totalPages,
+          hasNext: page < totalPages,
+          hasPrevious: page > 1
+        }
+      }), 
       { 
         status: 200,
         headers 

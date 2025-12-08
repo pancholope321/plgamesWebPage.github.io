@@ -1,9 +1,52 @@
 export async function onRequest(context) {
   const { request, env } = context;
   
+  // Get the Referer/Origin header
+  const referer = request.headers.get('Referer') || '';
+  const origin = request.headers.get('Origin') || '';
+  
+  // List of allowed itch.io domains (more comprehensive)
+  const ALLOWED_DOMAINS = [
+    'https://itch.io',
+    'https://*.itch.io',
+    'https://itch.io:443'
+  ];
+  
+  // Check if the request comes from an allowed domain
+  const isAllowed = ALLOWED_DOMAINS.some(domain => {
+    // Handle wildcards
+    if (domain.includes('*')) {
+      // Replace * with .* for regex, escape other regex characters
+      const escapedDomain = domain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '.*');
+      const regex = new RegExp('^' + escapedDomain);
+      return regex.test(referer) || regex.test(origin);
+    }
+    // For domains without wildcards, check if starts with
+    return referer.startsWith(domain) || origin.startsWith(domain);
+  });
+  
+  // Special case: also allow if it contains 'itch.io' anywhere in the domain
+  const containsItchIO = referer.includes('itch.io') || origin.includes('itch.io');
+  
+  if (!isAllowed && !containsItchIO) {
+    return new Response(
+      JSON.stringify({ 
+        error: 'Unauthorized: Only itch.io games can submit scores',
+        hint: 'Your game must be hosted on itch.io to submit scores'
+      }), 
+      { 
+        status: 403,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
+    );
+  }
+  
   // CORS headers
   const headers = {
-    'Access-Control-Allow-Origin': '*', // Change to your domain if needed
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json'
@@ -50,10 +93,13 @@ export async function onRequest(context) {
       );
     }
     
+    // Trim and limit name length
+    const trimmedName = name.trim().substring(0, 30);
+    
     // Insert the score into database
     const insertResult = await env.DB.prepare(
       'INSERT INTO scores (name, score) VALUES (?, ?)'
-    ).bind(name.trim(), parseInt(score)).run();
+    ).bind(trimmedName, parseInt(score)).run();
     
     // Get the player's rank (players with higher scores)
     const rankResult = await env.DB.prepare(`
