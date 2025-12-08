@@ -1,5 +1,5 @@
 # wrangler.toml
-name = "PLGames"
+name = "plgames"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "/public"
 
@@ -10,5 +10,5 @@ database_name = "money_sweeper"
 database_id = "2ae4a930-d62e-426a-a953-77a763e45b54" 
 
 [[pages]]
-name = "PLGames"
+name = "plgames"
 production_branch = "main"
