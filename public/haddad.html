@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link rel="icon" href="favicon.png" type="image/png">
+	<link href="https://fonts.cdnfonts.com/css/satoshi" rel="stylesheet">
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pancho Lopez Games</title>
+    <style>
+        body {
+            font-family: Satoshi;
+            margin: 0;
+            padding: 0;
+            background-color: rgba(240,240,250,1);
+            color: black;
+        }
+        header {
+			background:rgba(250,250,250,1);
+            color: black;
+            padding: 10px;
+            text-align: center;
+            font-size: 50px;
+			font-color:black;
+			width:100%;
+			margin: 0px auto; /* Centers the whole div horizontally */
+			font-weight: bold;
+        }
+        nav {
+			position:sticky;
+			top: 0;
+            display: flex;
+            justify-content: center;
+            background: rgba(250,250,250,1);
+            padding: 10px;
+			z-index:2;
+			border-color:rgba(200,200,200,1);
+			border-bottom-style:solid;
+			border-width:1px;
+			width:100%;
+			margin: 0px auto; /* Centers the whole div horizontally   */
+        }
+        nav a {
+            color: black;
+            text-decoration: none;
+            padding: 10px 20px;
+			border-radius: 5px;
+			margin-left: 10px;
+			margin-right: 10px;
+			font-size: 18px;
+			font-weight: bold;
+        }
+        nav a:hover {
+            background: rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+        .container {
+            padding: 20px;
+            text-align: center;
+        }
+        .data-row {
+			padding: 10px;
+			display: flex;
+			justify-content: space-evenly; /* Ensures elements fit without overflow */
+			flex-wrap: wrap; /* Allows elements to wrap on smaller screens */
+			width: 100%;
+			overflow: visible;
+			height: 300px;
+			margin: 20px auto; /* Centers the whole div horizontally */
+			
+		}
+
+		.data-row a {
+			background:black;
+			display: block;
+			width: 80%;
+			height: 100%
+			text-decoration: none;
+			border-radius: 20px;
+			text-decoration: none;
+		}
+
+		.data-row div {
+			border-radius: 20px;
+			width: 100%;
+			height: 100%; /* Adjust height as needed */
+			box-shadow: 10px 10px 15px rgba(0, 0, 0, 0.7); /* Soft shadow */
+			background:black;
+			text-align:right;
+		}
+		.data-row div:hover{
+			border-radius: 20px;
+			width: 100%;
+			height: 100%; /* Adjust height as needed */
+			box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.7); /* Soft shadow */
+			border: 8px solid yellow;
+		}
+		
+        footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin-top: 20px;
+        }
+		#stn {
+			background-image: url("stnBanner.png");
+			background-size: contain;
+			background-position: center;
+			background-repeat: no-repeat;
+			width:100%;
+			border-radius: 20px;
+		}
+		#moneySweeper{
+			background-image: url("moneySweeperSmallLogo.png");
+			background-size: contain;
+			background-position: center;
+			background-repeat: no-repeat;
+			width:100%;
+			border-radius: 20px;
+		}
+		#jugglingLite {
+			background-image: url("jugglingLiteBanner.png");
+			background-size: contain;
+			background-position: center;
+			background-repeat: no-repeat;
+			width:100%;
+			border-radius: 20px;
+		}
+		#swipeBuds {
+			background-image: url("SwipeBudspage.png");
+			background-size: contain;
+			background-position: center;
+			background-repeat: no-repeat;
+			width:100%;
+			border-radius: 20px;
+		}
+		#paycrimesPrototype {
+			background-image: url("payyourcrimesBaneer.png");
+			background-size: contain;
+			background-position: center;
+			background-repeat: no-repeat;
+			width:100%;
+			border-radius: 20px;
+		}
+		#paycrimes {
+			background-image: url("PayYourCrimes.jpg");
+			background-size: contain;
+			background-position: center;
+			background-repeat: no-repeat;
+			width:100%;
+			border-radius: 20px;
+		}
+		#aphid {
+			background-image: url("AphidCover.png");
+			background-size: contain;
+			background-position: center;
+			background-repeat: no-repeat;
+			width:100%;
+			border-radius: 20px;
+		}
+		#wave-mage {
+			background-image: url("wave_mage_capsule.png");
+			background-size: contain;
+			background-position: center;
+			background-repeat: no-repeat;
+			width:100%;
+			border-radius: 20px;
+		}
+		.data-row div span {
+			position: relative;
+			top: 10px; /* Moves text slightly down */
+			margin-right:10px;
+			background: yellow; /* Fun background color */
+			color: black; /* Ensures text is readable */
+			font-weight: bold;
+			padding: 5px 10px;
+			border-radius: 10px;
+			text-align: center;
+			white-space: nowrap;
+			text-decoration: none;
+			
+		}
+		#bigScreen{
+		width:90%;
+		display:none;
+		border-color:rgba(200,200,200,1);
+		border-style:solid;
+		border-width:1px;
+		border-radius: 20px;
+		margin: 20px auto; /* Centers the whole div horizontally */
+		background:rgba(250,250,250,1);
+		}
+		#smallScreen{
+		background:rgba(250,250,250,1);
+		width:90%;
+		display:block;
+		border-color:rgba(200,200,200,1);
+		border-style:solid;
+		border-width:1px;
+		border-radius: 20px;
+		margin: 20px auto; /* Centers the whole div horizontally */
+		}
+		@media only screen and (min-width: 1000px) {
+		header {
+			width:90%;
+        }
+        nav {
+			width:90%;
+		}
+		.data-row a {
+			background:black;
+			display: block;
+			width: 40%;
+			height: 100%
+			text-decoration: none;
+			border-radius: 20px;
+		}
+		#bigScreen{
+		display:block;
+		}
+		#smallScreen{
+		display:none;
+		}
+		}
+    </style>
+</head>
+<body>
+    <header>PLGames</header>
+    <nav>
+        <a href="#">Home</a>
+    </nav>
+    <div class="container">
+        <h2>Here are all the games developed by Pancho López</h2>
+        <p>I've produced phone games, web games and i'm working towards producing complex pc games</p>
+    </div>
+	<div id="smallScreen">
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://pancholope321.itch.io/money-sweeper">
+		<div id="moneySweeper"> 
+		 <span>Money Sweeper</span>
+		<br>
+		</div>
+		</a>
+		
+	</div>
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://pancholope321.itch.io/wave-mage">
+		<div id="wave-mage"> 
+		 <span>Wave Mage</span>
+		<br>
+		</div>
+		</a>
+		
+	</div>
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://store.steampowered.com/app/3635020/Pay_Your_Crimes">
+		<div id="paycrimes"> 
+		 <span>Pay Your Crimes</span>
+		<br>
+		</div>
+		</a>
+		
+	</div>
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://play.google.com/store/apps/details?id=org.project.jugglingLite&pcampaignid=web_share">
+        <div id="jugglingLite"> 
+		<span>Juggling Lite</span>
+		<br>
+		</div>
+		</a>
+	</div>
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://pancholope321.itch.io/aphid-revenge">
+		<div id="aphid"> 
+		 <span>Aphid Revenge</span>
+		<br>
+		</div>
+		</a>
+		
+	</div>
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://pancholope321.itch.io/pay-your-crimes">
+		<div id="paycrimesPrototype"> 
+		 <span>Pay Your Crimes Prototype</span>
+		<br>
+		</div>
+		</a>
+		
+	</div>
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://pancholope321.itch.io/surviving-the-night">
+        <div id="stn">
+		<span>Survive The Night</span>
+		<br></div>
+		</a>
+		</div>
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://pancholope321.itch.io/swipe-buds">
+        <div id="swipeBuds"> 
+		<span>Swipe Buds</span>
+		<br>
+		</div>
+		</a>
+	</div>
+	
+	</div>
+	<div id="bigScreen">
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://pancholope321.itch.io/money-sweeper">
+		<div id="moneySweeper"> 
+		 <span>Money Sweeper</span>
+		<br>
+		</div>
+		</a>
+		<a style="display:block" target="_blank" href="https://pancholope321.itch.io/wave-mage">
+		<div id="wave-mage"> 
+		 <span>Wave Mage</span>
+		<br>
+		</div>
+		</a>
+		
+		
+		
+	</div>
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://store.steampowered.com/app/3635020/Pay_Your_Crimes">
+		<div id="paycrimes"> 
+		 <span>Pay Your Crimes</span>
+		<br>
+		</div>
+		</a>
+		<a style="display:block" target="_blank" href="https://play.google.com/store/apps/details?id=org.project.jugglingLite&pcampaignid=web_share">
+        <div id="jugglingLite"> 
+		<span>Juggling Lite</span>
+		<br>
+		</div>
+		</a>
+		
+		
+	</div>
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://pancholope321.itch.io/aphid-revenge">
+		<div id="aphid"> 
+		 <span>Aphid Revenge</span>
+		<br>
+		</div>
+		</a>
+	<a style="display:block" target="_blank" href="https://pancholope321.itch.io/surviving-the-night">
+        <div id="stn">
+		<span>Survive The Night</span>
+		<br></div>
+		</a>
+	
+	
+	</div>
+	<div class="data-row">
+		<a style="display:block" target="_blank" href="https://pancholope321.itch.io/swipe-buds">
+		<div id="swipeBuds"> 
+		<span>Swipe Buds</span>
+		<br>
+		</div>
+		</a>
+	<a style="display:block" target="_blank" href="https://pancholope321.itch.io/pay-your-crimes">
+		<div id="paycrimesPrototype"> 
+		 <span>Pay Your Crimes Prototype</span>
+		<br>
+		</div>
+		</a>
+	
+	</div>
+	</div>
+	
+	
+	
+	
+	
+	
+	</div>
+
+    <footer>
+		<p><a style="color:yellow" href="https://docs.google.com/forms/d/e/1FAIpQLSeQjDDhp1ctSpxlg85B2RwM0duZ8FMqwvvYjp3kfuZAQPn6Ew/viewform?usp=header">Subscribe To The Mailing List</a></p>
+        <p>Contact me: plgameschile@gmail.com</p>
+        <p>Hosted by: Free hosting</p>
+        <p>&copy; 2025 PLGames. All rights reserved.</p>
+    </footer>
+</body>
+</html>
