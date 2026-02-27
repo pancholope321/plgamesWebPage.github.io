@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plásticos Haddad S.A. - Soluciones en Plástico desde 1955</title>
+    <meta name="description" content="Plásticos Haddad S.A.: Fabricantes de bidones, botellas PET, envases industriales, artículos para el hogar y más. Calidad y tradición desde 1955.">
+    <meta name="keywords" content="Plásticos Haddad, bidones, botellas PET, envases plásticos, baldes, tambores, artículos para el hogar, industria plástica Chile">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:title" content="Plásticos Haddad S.A.">
+    <meta property="og:description" content="Soluciones en plástico con calidad y tradición desde 1955.">
+    <meta property="og:image" content="https://www.haddad.cl/logoph.jpg">
+    <meta property="og:url" content="https://www.haddad.cl">
+    <meta property="og:type" content="website">
+
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Estilos -->
+    <style>
+        /* ===== RESET Y VARIABLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #005fa9;
+            --secondary-blue: #003366;
+            --accent-red: #d32f2f;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --gray-bg: #f4f7fa;
+            --white: #ffffff;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-hover: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --font-primary: 'Inter', sans-serif;
+            --font-heading: 'Poppins', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: var(--white);
+        }
+
+        /* ===== TIPOGRAFÍA ===== */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            line-height: 1.2;
+            color: var(--secondary-blue);
+        }
+
+        h1 { font-size: 2.5rem; }
+        h2 { font-size: 2rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--primary-blue); padding-bottom: 0.5rem; display: inline-block; }
+        h3 { font-size: 1.35rem; color: var(--primary-blue); }
+
+        a {
+            text-decoration: none;
+            color: var(--primary-blue);
+        }
+
+        .container {
+            <!-- max-width: 1400px; -->
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* ===== HEADER ===== */
+        .site-header {
+            background: linear-gradient(135deg, var(--secondary-blue) 0%, var(--primary-blue) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-img {
+            height: 80px;
+            width: auto;
+            background-color: white;
+            border-radius: 8px;
+            padding: 5px;
+            box-shadow: var(--shadow);
+        }
+
+        .company-name h1 {
+            color: white;
+            font-size: 1.8rem;
+            line-height: 1.1;
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+        .company-name h1 span { font-size: 2rem; font-weight: 700; display: block; }
+        .company-name .slogan { font-size: 0.9rem; opacity: 0.9; }
+
+        .header-contact {
+            text-align: right;
+            font-size: 0.95rem;
+        }
+        .header-contact p { margin-bottom: 0.25rem; }
+        .header-contact strong { color: #ffd966; }
+
+        /* ===== NAVEGACIÓN PRINCIPAL ===== */
+        .main-nav {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .nav-menu a {
+            font-weight: 500;
+            padding: 0.75rem 0;
+            display: inline-block;
+            color: var(--text-dark);
+            border-bottom: 3px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .nav-menu a:hover {
+            color: var(--primary-blue);
+            border-bottom-color: var(--primary-blue);
+        }
+        .nav-cta a {
+            background-color: var(--accent-red);
+            color: white !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 5px;
+            border-bottom: none !important;
+        }
+        .nav-cta a:hover {
+            background-color: #b71c1c;
+        }
+
+        /* ===== LAYOUT PRINCIPAL (SIDEBAR + CONTENIDO) ===== */
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+            /* Aseguramos que el contenedor ocupe todo el ancho disponible */
+            width: 100%;
+        }
+
+        /* ----- SIDEBAR (PRODUCTOS DE LÍNEA) ----- */
+        .sidebar {
+            background-color: var(--gray-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            align-self: start;
+            /* Ancho fijo para el sidebar */
+            width: 100%;
+        }
+        .sidebar h3 {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .product-line-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.75rem;
+            list-style: none;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .product-line-grid li a {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            display: block;
+            padding: 0.4rem 0.6rem;
+            background-color: white;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .product-line-grid li a:hover {
+            background-color: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        /* ----- MAIN CONTENT (PRODUCTOS DESTACADOS) ----- */
+        .main-content {
+            min-width: 0;
+			width:80%;
+            /* El contenido principal ocupará el espacio restante automáticamente */
+        }
+        .info-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            background: linear-gradient(to right, #e8f0fe, #ffffff);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid var(--primary-blue);
+        }
+        .transfer-info p { margin: 0; }
+        .waze-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #33aaff;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+        }
+        .waze-link img { height: 30px; filter: brightness(0) invert(1); }
+
+        /* Grilla de Productos */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .product-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+        .product-image {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            background-color: #fafafa;
+            border-radius: 8px;
+        }
+        .product-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .product-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--secondary-blue);
+        }
+        .product-details {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+            flex-grow: 1;
+        }
+        .product-details p { margin: 0.25rem 0; }
+        .product-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-red);
+            margin-bottom: 0.5rem;
+        }
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 0.75rem;
+            font-size: 0.85rem;
+        }
+        .product-code {
+            font-family: monospace;
+            background: var(--gray-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+        .product-pdf a {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        /* Ofertas (Carrusel) */
+        .offers-section {
+            margin-top: 3rem;
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            padding: 2rem;
+            border-radius: 12px;
+        }
+        .offers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .offer-badge {
+            background-color: var(--accent-red);
+            color: white;
+            padding: 0.2rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* ===== FOOTER ===== */
+        .site-footer {
+            background-color: var(--secondary-blue);
+            color: white;
+            padding: 3rem 0 1.5rem;
+            margin-top: 4rem;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        .footer-col p, .footer-col a {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.95rem;
+        }
+        .footer-col a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        .footer-copyright {
+            text-align: center;
+            padding-top: 2rem;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                order: 2;
+                width: 100%; /* En móvil el sidebar ocupa todo el ancho */
+            }
+            .product-line-grid {
+                max-height: 300px;
+            }
+			.main-content {
+				min-width: 0;
+				width:100%;
+				/* El contenido principal ocupará el espacio restante automáticamente */
+			
+			}
+		}
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            .header-contact { text-align: center; }
+            .nav-menu { justify-content: center; }
+            .info-bar { flex-direction: column; text-align: center; }
+			.main-content {
+				min-width: 0;
+				width:100%;
+				/* El contenido principal ocupará el espacio restante automáticamente */
+			
+        }
+    </style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container header-content">
+        <div class="logo-area">
+            <!-- Logo desde el sitio oficial -->
+            <img src="https://www.haddad.cl/logoph.jpg" alt="Plásticos Haddad Logo" class="logo-img">
+            <div class="company-name">
+                <h1>Plásticos <span>HADDAD</span></h1>
+                <p class="slogan">Soluciones en plástico desde 1955</p>
+            </div>
+        </div>
+        <div class="header-contact">
+            <p><strong>📍 José Ananías 444, Macul - Santiago</strong></p>
+            <p>📞 <strong>+56 2 2462 7200</strong> | ✉️ <a href="mailto:ventas@haddad.cl" style="color:#ffd966;">ventas@haddad.cl</a></p>
+            <p>🕒 Lun-Jue: 8:00-17:00 | Vie: 8:00-13:30</p>
+        </div>
+    </div>
+</header>
+
+<nav class="main-nav">
+    <div class="container nav-container">
+        <ul class="nav-menu">
+            <li><a href="https://www.haddad.cl/index.html">Inicio</a></li>
+            <li><a href="https://www.haddad.cl/historia.htm">Historia</a></li>
+            <li><a href="https://www.haddad.cl/conozcanos.htm">Conózcanos</a></li>
+            <li><a href="https://www.haddad.cl/contactenos.htm">Contáctenos</a></li>
+            <li><a href="https://www.haddad.cl/buscador.htm">Buscador</a></li>
+        </ul>
+        <div class="nav-cta">
+            <a href="https://www.haddad.cl/lista%20de%20precios.pdf" target="_blank">📋 Lista de Precios</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <!-- El content-wrapper ahora está dentro de container y se centrará automáticamente -->
+    <div class="content-wrapper">
+        <!-- Sidebar con productos de línea -->
+        <aside class="sidebar">
+            <h3>🚀 Productos de Línea</h3>
+            <ul class="product-line-grid">
+                <!-- Aquí van los ítems de la lista de productos, acortados para el ejemplo -->
+                <li><a href="https://www.haddad.cl/bidones.htm">Bidones y Tambores</a></li>
+                <li><a href="https://www.haddad.cl/pet.html">Botellas PET</a></li>
+                <li><a href="https://www.haddad.cl/baldes%20uso%20industrial.htm">Baldes Industriales</a></li>
+                <li><a href="https://www.haddad.cl/art%20laboratorio.html">Artículos para Laboratorio</a></li>
+                <li><a href="https://www.haddad.cl/envasespet.html">Envases para Alimentos</a></li>
+                <li><a href="https://www.haddad.cl/maceteros.htm">Maceteros y Jardinería</a></li>
+                <li><a href="https://www.haddad.cl/menaje.htm">Artículos para el Hogar</a></li>
+                <li><a href="https://www.haddad.cl/juguetes%20haddad.htm">Juguetes</a></li>
+                <li><a href="https://www.haddad.cl/tapasdosifica.html">Tapas y Accesorios</a></li>
+                <li><a href="https://www.haddad.cl/vial.html">Productos para Vialidad</a></li>
+                <li><a href="https://www.haddad.cl/camping.html">Artículos para Camping</a></li>
+                <li><a href="https://www.haddad.cl/art%20automoviles.htm">Artículos para Automóviles</a></li>
+                <li><a href="https://www.haddad.cl/ppedido.html">... y muchos más</a></li>
+            </ul>
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <a href="https://www.haddad.cl/calidad.htm" style="font-weight: 600;">📜 Política de Calidad</a>
+            </div>
+        </aside>
+
+        <!-- Contenido principal -->
+        <section class="main-content">
+            <!-- Barra de información destacada -->
+            <div class="info-bar">
+                <div class="transfer-info">
+                    <h3 style="margin-bottom: 0.25rem;">Datos para Transferencia</h3>
+                    <p><strong>Banco BCI - Cta. Cte. 83023348</strong><br>
+                    Plásticos Haddad S.A. - RUT: 86.778.100-5</p>
+                </div>
+                <div class="cert-badges" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="https://www.haddad.cl/calidad.htm" style="background: white; padding: 0.5rem 1rem; border-radius: 30px; color: var(--primary-blue); font-weight: 600;">ISO 9001:2015</a>
+                    <a href="https://www.haddad.cl/calidad.htm" style="background: white; padding: 0.5rem 1rem; border-radius: 30px; color: var(--primary-blue); font-weight: 600;">ISO 14001:2015</a>
+                    <a href="https://www.waze.com/es/live-map/directions?from=place.ws.row.22279105.444" class="waze-link" target="_blank">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M20.52 3.48C18.46 1.42 15.56 0 12.34 0 5.87 0 .52 5.35.52 11.82c0 2.66.88 5.11 2.36 7.09L.75 22.5l4.17-1.91c1.82 1.05 3.95 1.67 6.22 1.67 6.47 0 11.82-5.35 11.82-11.82 0-3.17-1.24-6.05-3.3-8.12zM12 20c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'/%3E%3C/svg%3E" alt="Waze" style="height: 24px;">
+                        <span>¡Cómo llegar en Waze!</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Grilla de Productos Destacados (con rutas absolutas) -->
+            <h2>🌟 Productos Destacados</h2>
+            <div class="product-grid">
+                <!-- Producto 1: Bidón 25L -->
+                <article class="product-card">
+                    <div class="product-image">
+                        <img src="https://www.haddad.cl/img/11040591AZ.jpg" alt="Bidón 25L Eco Azul">
+                    </div>
+                    <h3 class="product-title">Bidón 25L Eco con tapa 34</h3>
+                    <div class="product-details">
+                        <p><strong>Color:</strong> Azul / Natural</p>
+                    </div>
+                    <div class="product-price">$5.030 <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-light);">+ IVA</span></div>
+                    <div class="product-meta">
+                        <span class="product-code">11040591AZ</span>
+                        <span class="product-pdf"><a href="#">📄 Ver PDF</a></span>
+                    </div>
+                </article>
+
+                <article class="product-card">
+                    <div class="product-image">
+                        <img src="https://www.haddad.cl/img/BARRICA_VERDE.jpg" alt="Barrica 60L">
+                    </div>
+                    <h3 class="product-title">Barrica 60L con zuncho metálico</h3>
+                    <div class="product-details">
+                        <p>Tapa 28.5 cm - Color Verde</p>
+                    </div>
+                    <div class="product-price">$22.500 <span style="font-size: 0.9rem;">+ IVA</span></div>
+                    <div class="product-meta">
+                        <span class="product-code">113129NEVE</span>
+                        <span class="product-pdf"><a href="#">📄 PDF</a></span>
+                    </div>
+                </article>
+
+                <article class="product-card">
+                    <div class="product-image">
+                        <img src="https://www.haddad.cl/img/BOT1LTB280trd.jpg" alt="Botella 1L boca 280">
+                    </div>
+                    <h3 class="product-title">Botella 1L boca 280</h3>
+                    <div class="product-details">
+                        <p>Terminación redonda. Natural o Blanco.</p>
+                    </div>
+                    <div class="product-price">$330 <span style="font-size: 0.9rem;">+ IVA</span></div>
+                    <div class="product-meta">
+                        <span class="product-code">13118012BL</span>
+                        <span class="product-pdf"><a href="#">📄 PDF</a></span>
+                    </div>
+                </article>
+
+                <article class="product-card">
+                    <div class="product-image">
+                        <img src="https://www.haddad.cl/img/bDOSrEV.jpg" alt="Botella PET 350cc">
+                    </div>
+                    <h3 class="product-title">Botella PET 350cc para salsa</h3>
+                    <div class="product-details">
+                        <p>Boca 38 + Tapa Flip Top colores</p>
+                    </div>
+                    <div class="product-price">$170 <span style="font-size: 0.9rem;">+ IVA</span></div>
+                    <div class="product-meta">
+                        <span class="product-code">13110173TR</span>
+                        <span class="product-pdf"><a href="#">📄 PDF</a></span>
+                    </div>
+                </article>
+
+                <article class="product-card">
+                    <div class="product-image">
+                        <img src="https://www.haddad.cl/img/indoro_blanco_Wc.jpg" alt="Balde 65L WC">
+                    </div>
+                    <h3 class="product-title">Balde 65L con tapa WC</h3>
+                    <div class="product-details">
+                        <p>Ideal para diversos usos.</p>
+                    </div>
+                    <div class="product-price">$22.000 <span style="font-size: 0.9rem;">+ IVA</span></div>
+                    <div class="product-meta">
+                        <span class="product-code">11030003BL</span>
+                        <span class="product-pdf"><a href="#">📄 PDF</a></span>
+                    </div>
+                </article>
+
+                <article class="product-card">
+                    <div class="product-image">
+                        <img src="https://www.haddad.cl/img/BotellasCYGR.jpg" alt="Bidones 5 y 10L">
+                    </div>
+                    <h3 class="product-title">Bidones 5 y 10L</h3>
+                    <div class="product-details">
+                        <p>Colores verde, naranja, celeste. Oferta por volumen.</p>
+                    </div>
+                    <div class="product-price">$400 / $950 <span style="font-size: 0.9rem;">+ IVA</span></div>
+                    <div class="product-meta">
+                        <span class="product-code">1104255IVE</span>
+                        <span class="product-pdf"><a href="#">📄 PDF</a></span>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Sección de Ofertas Especiales -->
+            <section class="offers-section">
+                <h2 style="color: var(--accent-red); border-bottom-color: var(--accent-red);">🔥 Ofertas Especiales</h2>
+                <div class="offers-grid">
+                    <div class="product-card" style="border: 2px solid var(--accent-red);">
+                        <span class="offer-badge">OFERTA</span>
+                        <div class="product-image">
+                            <img src="https://www.haddad.cl/img/bidbla5.jpg" alt="Bidón 5L Beri">
+                        </div>
+                        <h3>Bidón 5L tapa Beri</h3>
+                        <div class="product-price">$450 + IVA</div>
+                        <p><small>Sobre 200 unidades: descuento especial</small></p>
+                        <div class="product-meta"><span class="product-code">1304245INA</span></div>
+                    </div>
+                    <div class="product-card">
+                        <span class="offer-badge">OFERTA</span>
+                        <div class="product-image">
+                            <img src="https://www.haddad.cl/img/BTR280A.jpg" alt="Botella PET 280cc">
+                        </div>
+                        <h3>Botella PET 280cc boca ancha</h3>
+                        <div class="product-price">$170 + IVA</div>
+                        <div class="product-meta"><span class="product-code">13110136TR</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Botellas PET (grupo) -->
+            <h2 style="margin-top: 2rem;">💧 Botellas PET</h2>
+            <div class="product-grid">
+                <article class="product-card">
+                    <div class="product-image"><img src="https://www.haddad.cl/img/Botellas_1LT______.jpg" alt="Botella 1L lisa"></div>
+                    <h3>Botella PET 1L boca 280 lisa</h3>
+                    <div class="product-price">$147 + IVA</div>
+                    <div class="product-meta"><span class="product-code">13110127TR</span></div>
+                </article>
+                <article class="product-card">
+                    <div class="product-image"><img src="https://www.haddad.cl/img/Botellas_500ccccc.jpg" alt="Botella 500cc"></div>
+                    <h3>Botella PET 500cc boca 280 lisa</h3>
+                    <div class="product-price">$137 + IVA</div>
+                    <div class="product-meta"><span class="product-code">13110128TR</span></div>
+                </article>
+                <article class="product-card">
+                    <div class="product-image"><img src="https://www.haddad.cl/img/bidon%2025LT%20BIPALL.jpg" alt="Bidón 20L"></div>
+                    <h3>Bidón 25L boca 4.8 pallet estándar</h3>
+                    <div class="product-price">$5.200 + IVA</div>
+                    <div class="product-meta"><span class="product-code">1304128INA</span></div>
+                </article>
+                <article class="product-card">
+                    <div class="product-image"><img src="https://www.haddad.cl/Bidon_20_BPLa.jpg" alt="Bidón 20L ER"></div>
+                    <h3>Bidón 20L boca 4.8 apilable ER</h3>
+                    <div class="product-price">$4.100 + IVA</div>
+                    <div class="product-meta"><span class="product-code">1304126IBL</span></div>
+                </article>
+                <article class="product-card">
+                    <div class="product-image"><img src="https://www.haddad.cl/PET280APLA.jpg" alt="Botella aplanada"></div>
+                    <h3>Botella PET 1L boca 280 aplanada</h3>
+                    <div class="product-price">$150 + IVA</div>
+                    <div class="product-meta"><span class="product-code">13110198TR</span></div>
+                </article>
+                <article class="product-card">
+                    <div class="product-image"><img src="https://www.haddad.cl/BID3LECO383.jpg" alt="Bidón 3L"></div>
+                    <h3>Bidón 3L económico tapa Beri</h3>
+                    <div class="product-price">$980 + IVA</div>
+                    <div class="product-meta"><span class="product-code">13400242NA</span></div>
+                </article>
+                <!-- Botella aceite oliva -->
+                <article class="product-card">
+                    <div class="product-image"><img src="https://www.haddad.cl/BOT_PET1B.jpg" alt="Botella aceite oliva"></div>
+                    <h3>Botella PET 1L aceite oliva</h3>
+                    <div class="product-price">$163 + IVA</div>
+                    <div class="product-meta"><span class="product-code">13110197VO</span></div>
+                </article>
+            </div>
+
+            <!-- Productos Varios (resumidos) -->
+            <h2>🏺 Otros Productos</h2>
+            <div class="product-grid">
+                <article class="product-card"><div class="product-image"><img src="https://www.haddad.cl/img/Broche_Raschel.jpg" alt="Fijador Raschel"></div><h3>Fijador de Raschel</h3><div class="product-price">$140 + IVA</div><div class="product-meta"><span>11380600NE</span></div></article>
+                <article class="product-card"><div class="product-image"><img src="https://www.haddad.cl/Botella_PET_PisT.jpg" alt="Pistola Spray"></div><h3>Pistola Spray mini 100cc</h3><div class="product-price">$475 + IVA</div><div class="product-meta"><span>11420506TR</span></div></article>
+                <article class="product-card"><div class="product-image"><img src="https://www.haddad.cl/Botella_PET_GRUPO_DOS.jpg" alt="Botella 100cc"></div><h3>Botella PET 100cc boca 240</h3><div class="product-price">$116 + IVA</div><div class="product-meta"><span>13110080TR</span></div></article>
+                <article class="product-card"><div class="product-image"><img src="https://www.haddad.cl/Frasco_1LT_B80CU.jpg" alt="Frasco 1L cuadrado"></div><h3>Frasco 1L boca 80 cuadrado</h3><div class="product-price">$1.170 + IVA</div><div class="product-meta"><span>13215300NA</span></div></article>
+                <article class="product-card"><div class="product-image"><img src="https://www.haddad.cl/Frasco__1_5LT%20B_80.jpg" alt="Frasco 1.5L"></div><h3>Frasco 1.5L boca 80</h3><div class="product-price">$1.520 + IVA</div><div class="product-meta"><span>13215000NA</span></div></article>
+                <article class="product-card"><div class="product-image"><img src="https://www.haddad.cl/Frasco_2LT%20B.jpg" alt="Frasco 2L"></div><h3>Frasco 2L boca 80</h3><div class="product-price">$1.800 + IVA</div><div class="product-meta"><span>13214900NA</span></div></article>
+            </div>
+
+            <!-- Enlace a más productos -->
+            <div style="text-align: center; margin: 3rem 0;">
+                <a href="https://www.haddad.cl/Produprin.html" style="background: var(--primary-blue); color: white; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; display: inline-block;">📦 Ver todos nuestros productos</a>
+            </div>
+        </section>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4 style="color: white;">Plásticos Haddad S.A.</h4>
+                <p>José Ananías 444, Macul<br>Santiago - Chile</p>
+                <p>Fono: +56 2 2462 7200<br>Email: <a href="mailto:ventas@haddad.cl">ventas@haddad.cl</a></p>
+            </div>
+            <div class="footer-col">
+                <h4 style="color: white;">Enlaces Rápidos</h4>
+                <p><a href="https://www.haddad.cl/historia.htm">Historia</a></p>
+                <p><a href="https://www.haddad.cl/conozcanos.htm">Conózcanos</a></p>
+                <p><a href="https://www.haddad.cl/contactenos.htm">Contacto</a></p>
+                <p><a href="https://www.haddad.cl/lista%20de%20precios.pdf" target="_blank">Lista de Precios</a></p>
+            </div>
+            <div class="footer-col">
+                <h4 style="color: white;">Horario</h4>
+                <p>Lunes a Jueves: 08:00 - 17:00<br>Viernes: 08:00 - 13:30<br>Horario continuado</p>
+            </div>
+        </div>
+        <div class="footer-copyright">
+            <p>&copy; 2025 Plásticos Haddad S.A. - Todos los derechos reservados.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Script para manejo de imágenes rotas (opcional, pero útil) -->
+<script>
+    document.querySelectorAll('img').forEach(img => {
+        img.onerror = function() {
+            this.onerror = null;
+            this.src = 'https://via.placeholder.com/200x200?text=Haddad';
+        };
+    });
+</script>
+
+
+</body>
+</html>
