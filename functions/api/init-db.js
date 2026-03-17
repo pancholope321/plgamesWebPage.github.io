@@ -31,6 +31,14 @@ export async function onRequest(context) {
         score INTEGER NOT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS scores_two_times (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        gamemode TEXT NOT NULL DEFAULT 'default',
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
     `);
     
     return new Response('✅ Database initialized successfully!', { 
