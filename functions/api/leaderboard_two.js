@@ -69,7 +69,8 @@ export async function onRequest(context) {
     return new Response(JSON.stringify({
       success: true,
       data: leaderboard,
-      requestedGamemode: requestedMode || 'all',
+      requestedGamemode: requestedMode,
+      // requestedGamemode: requestedMode || 'all',
       pagination: {
         page,
         pageSize,
