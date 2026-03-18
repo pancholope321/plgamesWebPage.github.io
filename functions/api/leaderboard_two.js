@@ -21,7 +21,12 @@ export async function onRequest(context) {
     const page = Math.max(parseInt(url.searchParams.get('page')) || 1, 1);
     const pageSize = Math.min(parseInt(url.searchParams.get('pageSize')) || 10, 100);
     const offset = (page - 1) * pageSize;
-    const requestedMode = (url.searchParams.get('gamemode') || '').trim();
+    const requestedMode = (
+      url.searchParams.get('gamemode')?.trim() ||
+      url.searchParams.get('gameMode')?.trim() ||
+      url.searchParams.get('mode')?.trim() ||
+      ''
+    );
 
     const totalCountQuery = requestedMode
       ? 'SELECT COUNT(*) as total FROM scores_two_times WHERE gamemode = ?'
