@@ -23,24 +23,25 @@ export async function onRequest(context) {
   }
   
   try {
-    // Create the scores table if it doesn't exist
-    await env.DB.exec(`
-      CREATE TABLE IF NOT EXISTS scores (
+    // NOTE: env.DB.exec() splits statements on the "\n" character rather than
+    // ";", so a multi-line-formatted CREATE TABLE breaks it (each line gets
+    // run as its own incomplete statement). Using batch() with one prepared
+    // statement per DDL command avoids that entirely.
+    const statements = [
+      `CREATE TABLE IF NOT EXISTS scores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         score INTEGER NOT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS scores_two_times (
+      )`,
+      `CREATE TABLE IF NOT EXISTS scores_two_times (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         score INTEGER NOT NULL,
         gamemode TEXT NOT NULL DEFAULT 'default',
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS player_statistics (
+      )`,
+      `CREATE TABLE IF NOT EXISTS player_statistics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         fingerprint TEXT NOT NULL,
         client_timestamp REAL NOT NULL,
@@ -48,15 +49,16 @@ export async function onRequest(context) {
         powers TEXT NOT NULL,
         statistics TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_player_statistics_fingerprint ON player_statistics(fingerprint)`,
+      `CREATE INDEX IF NOT EXISTS idx_player_statistics_created_at ON player_statistics(created_at)`
+    ];
 
-      CREATE INDEX IF NOT EXISTS idx_player_statistics_fingerprint ON player_statistics(fingerprint);
-      CREATE INDEX IF NOT EXISTS idx_player_statistics_created_at ON player_statistics(created_at);
-    `);
-    
-    return new Response('✅ Database initialized successfully!', { 
+    await env.DB.batch(statements.map(sql => env.DB.prepare(sql)));
+
+    return new Response('✅ Database initialized successfully!', {
       status: 200,
-      headers 
+      headers
     });
     
   } catch (error) {
