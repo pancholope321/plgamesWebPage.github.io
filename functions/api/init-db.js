@@ -39,6 +39,19 @@ export async function onRequest(context) {
         gamemode TEXT NOT NULL DEFAULT 'default',
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS player_statistics (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fingerprint TEXT NOT NULL,
+        client_timestamp REAL NOT NULL,
+        client_datetime TEXT NOT NULL,
+        powers TEXT NOT NULL,
+        statistics TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_player_statistics_fingerprint ON player_statistics(fingerprint);
+      CREATE INDEX IF NOT EXISTS idx_player_statistics_created_at ON player_statistics(created_at);
     `);
     
     return new Response('✅ Database initialized successfully!', { 

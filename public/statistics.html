@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link rel="icon" href="favicon.png" type="image/png">
+	<link href="https://fonts.cdnfonts.com/css/satoshi" rel="stylesheet">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Player Statistics</title>
+	<style>
+		body {
+			font-family: Satoshi, sans-serif;
+			margin: 0;
+			padding: 0;
+			background-color: rgba(240,240,250,1);
+			color: black;
+		}
+		header {
+			background: rgba(250,250,250,1);
+			color: black;
+			padding: 20px 10px;
+			text-align: center;
+			font-size: 32px;
+			font-weight: bold;
+			border-bottom: 1px solid rgba(200,200,200,1);
+		}
+		.container {
+			max-width: 1100px;
+			margin: 0 auto;
+			padding: 20px;
+		}
+		.panel {
+			background: white;
+			border-radius: 12px;
+			padding: 16px;
+			margin-bottom: 16px;
+			box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+		}
+		.controls {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			align-items: center;
+		}
+		.controls input, .controls select {
+			font-family: inherit;
+			padding: 8px 10px;
+			border: 1px solid rgba(200,200,200,1);
+			border-radius: 6px;
+			font-size: 14px;
+		}
+		.controls input[type="password"] {
+			width: 220px;
+		}
+		button {
+			font-family: inherit;
+			padding: 8px 14px;
+			border: none;
+			border-radius: 6px;
+			background: black;
+			color: white;
+			font-weight: bold;
+			cursor: pointer;
+			font-size: 14px;
+		}
+		button.secondary {
+			background: rgba(0,0,0,0.08);
+			color: black;
+		}
+		button:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			font-size: 14px;
+		}
+		th, td {
+			text-align: left;
+			padding: 8px 10px;
+			border-bottom: 1px solid rgba(230,230,230,1);
+			vertical-align: top;
+			word-break: break-word;
+		}
+		th {
+			background: rgba(245,245,245,1);
+		}
+		pre {
+			background: rgba(245,245,250,1);
+			border-radius: 6px;
+			padding: 8px;
+			font-size: 12px;
+			max-height: 240px;
+			overflow: auto;
+			white-space: pre-wrap;
+			word-break: break-word;
+		}
+		#status {
+			font-size: 14px;
+			color: #444;
+			min-height: 20px;
+		}
+		#status.error {
+			color: #b00020;
+		}
+		.pagination {
+			display: flex;
+			gap: 10px;
+			align-items: center;
+			justify-content: center;
+			margin-top: 12px;
+		}
+	</style>
+</head>
+<body>
+	<header>Player Statistics</header>
+	<div class="container">
+		<div class="panel">
+			<div class="controls">
+				<input type="password" id="adminKey" placeholder="Admin key" autocomplete="off">
+				<input type="text" id="fingerprintFilter" placeholder="Filter by fingerprint (optional)">
+				<select id="pageSize">
+					<option value="10">10 / page</option>
+					<option value="25" selected>25 / page</option>
+					<option value="50">50 / page</option>
+					<option value="100">100 / page</option>
+				</select>
+				<button id="loadBtn">Load</button>
+				<button id="forgetBtn" class="secondary">Forget key</button>
+			</div>
+			<div id="status"></div>
+		</div>
+
+		<div class="panel">
+			<table id="statsTable">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Fingerprint</th>
+						<th>Datetime</th>
+						<th>Received</th>
+						<th>Powers</th>
+						<th>Statistics</th>
+					</tr>
+				</thead>
+				<tbody id="statsBody"></tbody>
+			</table>
+			<div class="pagination">
+				<button id="prevBtn" class="secondary">Prev</button>
+				<span id="pageIndicator"></span>
+				<button id="nextBtn" class="secondary">Next</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		(function () {
+			const STORAGE_KEY = 'statsAdminKey';
+
+			const adminKeyInput = document.getElementById('adminKey');
+			const fingerprintFilterInput = document.getElementById('fingerprintFilter');
+			const pageSizeSelect = document.getElementById('pageSize');
+			const loadBtn = document.getElementById('loadBtn');
+			const forgetBtn = document.getElementById('forgetBtn');
+			const statusEl = document.getElementById('status');
+			const statsBody = document.getElementById('statsBody');
+			const prevBtn = document.getElementById('prevBtn');
+			const nextBtn = document.getElementById('nextBtn');
+			const pageIndicator = document.getElementById('pageIndicator');
+
+			let currentPage = 1;
+			let totalPages = 1;
+
+			const savedKey = localStorage.getItem(STORAGE_KEY);
+			if (savedKey) adminKeyInput.value = savedKey;
+
+			function setStatus(message, isError) {
+				statusEl.textContent = message || '';
+				statusEl.classList.toggle('error', Boolean(isError));
+			}
+
+			function clearTable() {
+				// Removing children instead of innerHTML = '' avoids any chance
+				// of stale HTML being reinterpreted; safe either way here since
+				// there is no dynamic content, but kept consistent with the
+				// "never build HTML from strings" rule used below.
+				while (statsBody.firstChild) {
+					statsBody.removeChild(statsBody.firstChild);
+				}
+			}
+
+			function formatDate(unixSeconds) {
+				if (typeof unixSeconds !== 'number' || !isFinite(unixSeconds)) return '';
+				return new Date(unixSeconds * 1000).toLocaleString();
+			}
+
+			// Every piece of server data is inserted with textContent, never
+			// innerHTML/insertAdjacentHTML — this is what actually prevents
+			// stored XSS even if a malicious client ever managed to submit a
+			// fingerprint or stat value containing "<script>" or similar.
+			function renderRows(rows) {
+				clearTable();
+
+				for (const row of rows) {
+					const tr = document.createElement('tr');
+
+					const cells = [
+						String(row.id ?? ''),
+						row.fingerprint ?? '',
+						row.datetime ?? '',
+						row.createdAt ?? formatDate(row.timestamp)
+					];
+
+					for (const cellText of cells) {
+						const td = document.createElement('td');
+						td.textContent = cellText;
+						tr.appendChild(td);
+					}
+
+					const powersTd = document.createElement('td');
+					const powersPre = document.createElement('pre');
+					powersPre.textContent = JSON.stringify(row.powers ?? {}, null, 2);
+					powersTd.appendChild(powersPre);
+					tr.appendChild(powersTd);
+
+					const statsTd = document.createElement('td');
+					const statsPre = document.createElement('pre');
+					statsPre.textContent = JSON.stringify(row.statistics ?? {}, null, 2);
+					statsTd.appendChild(statsPre);
+					tr.appendChild(statsTd);
+
+					statsBody.appendChild(tr);
+				}
+			}
+
+			async function loadPage(page) {
+				const key = adminKeyInput.value.trim();
+				if (!key) {
+					setStatus('Enter the admin key first.', true);
+					return;
+				}
+				localStorage.setItem(STORAGE_KEY, key);
+
+				const pageSize = pageSizeSelect.value;
+				const fingerprint = fingerprintFilterInput.value.trim();
+
+				const params = new URLSearchParams({ page: String(page), pageSize });
+				if (fingerprint) params.set('fingerprint', fingerprint);
+
+				setStatus('Loading...');
+				loadBtn.disabled = true;
+
+				try {
+					const res = await fetch('/api/statistics?' + params.toString(), {
+						headers: { 'X-Admin-Key': key }
+					});
+					const body = await res.json();
+
+					if (!res.ok || !body.success) {
+						setStatus(body.error || ('Request failed (' + res.status + ')'), true);
+						clearTable();
+						pageIndicator.textContent = '';
+						return;
+					}
+
+					currentPage = body.pagination.page;
+					totalPages = body.pagination.totalPages;
+					pageIndicator.textContent = 'Page ' + currentPage + ' / ' + totalPages + ' (' + body.pagination.total + ' rows)';
+					prevBtn.disabled = !body.pagination.hasPrevious;
+					nextBtn.disabled = !body.pagination.hasNext;
+
+					renderRows(body.data);
+					setStatus(body.data.length + ' record(s) loaded.');
+				} catch (err) {
+					setStatus('Network error: ' + err.message, true);
+				} finally {
+					loadBtn.disabled = false;
+				}
+			}
+
+			loadBtn.addEventListener('click', () => loadPage(1));
+			prevBtn.addEventListener('click', () => { if (currentPage > 1) loadPage(currentPage - 1); });
+			nextBtn.addEventListener('click', () => { if (currentPage < totalPages) loadPage(currentPage + 1); });
+			forgetBtn.addEventListener('click', () => {
+				localStorage.removeItem(STORAGE_KEY);
+				adminKeyInput.value = '';
+				setStatus('Key forgotten.');
+			});
+
+			if (savedKey) loadPage(1);
+		})();
+	</script>
+</body>
+</html>
