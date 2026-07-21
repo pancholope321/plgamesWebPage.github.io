@@ -48,10 +48,13 @@ export async function onRequest(context) {
         client_datetime TEXT NOT NULL,
         powers TEXT NOT NULL,
         statistics TEXT NOT NULL,
+        ip TEXT,
+        received_unix INTEGER NOT NULL DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
       `CREATE INDEX IF NOT EXISTS idx_player_statistics_fingerprint ON player_statistics(fingerprint)`,
-      `CREATE INDEX IF NOT EXISTS idx_player_statistics_created_at ON player_statistics(created_at)`
+      `CREATE INDEX IF NOT EXISTS idx_player_statistics_created_at ON player_statistics(created_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_player_statistics_ip_time ON player_statistics(ip, received_unix)`
     ];
 
     await env.DB.batch(statements.map(sql => env.DB.prepare(sql)));

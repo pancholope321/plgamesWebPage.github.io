@@ -48,9 +48,6 @@
 			border-radius: 6px;
 			font-size: 14px;
 		}
-		.controls input[type="password"] {
-			width: 220px;
-		}
 		button {
 			font-family: inherit;
 			padding: 8px 14px;
@@ -117,7 +114,6 @@
 	<div class="container">
 		<div class="panel">
 			<div class="controls">
-				<input type="password" id="adminKey" placeholder="Admin key" autocomplete="off">
 				<input type="text" id="fingerprintFilter" placeholder="Filter by fingerprint (optional)">
 				<select id="pageSize">
 					<option value="10">10 / page</option>
@@ -125,8 +121,7 @@
 					<option value="50">50 / page</option>
 					<option value="100">100 / page</option>
 				</select>
-				<button id="loadBtn">Load</button>
-				<button id="forgetBtn" class="secondary">Forget key</button>
+				<button id="loadBtn">Refresh</button>
 			</div>
 			<div id="status"></div>
 		</div>
@@ -155,13 +150,9 @@
 
 	<script>
 		(function () {
-			const STORAGE_KEY = 'statsAdminKey';
-
-			const adminKeyInput = document.getElementById('adminKey');
 			const fingerprintFilterInput = document.getElementById('fingerprintFilter');
 			const pageSizeSelect = document.getElementById('pageSize');
 			const loadBtn = document.getElementById('loadBtn');
-			const forgetBtn = document.getElementById('forgetBtn');
 			const statusEl = document.getElementById('status');
 			const statsBody = document.getElementById('statsBody');
 			const prevBtn = document.getElementById('prevBtn');
@@ -171,19 +162,12 @@
 			let currentPage = 1;
 			let totalPages = 1;
 
-			const savedKey = localStorage.getItem(STORAGE_KEY);
-			if (savedKey) adminKeyInput.value = savedKey;
-
 			function setStatus(message, isError) {
 				statusEl.textContent = message || '';
 				statusEl.classList.toggle('error', Boolean(isError));
 			}
 
 			function clearTable() {
-				// Removing children instead of innerHTML = '' avoids any chance
-				// of stale HTML being reinterpreted; safe either way here since
-				// there is no dynamic content, but kept consistent with the
-				// "never build HTML from strings" rule used below.
 				while (statsBody.firstChild) {
 					statsBody.removeChild(statsBody.firstChild);
 				}
@@ -234,13 +218,6 @@
 			}
 
 			async function loadPage(page) {
-				const key = adminKeyInput.value.trim();
-				if (!key) {
-					setStatus('Enter the admin key first.', true);
-					return;
-				}
-				localStorage.setItem(STORAGE_KEY, key);
-
 				const pageSize = pageSizeSelect.value;
 				const fingerprint = fingerprintFilterInput.value.trim();
 
@@ -251,9 +228,7 @@
 				loadBtn.disabled = true;
 
 				try {
-					const res = await fetch('/api/statistics?' + params.toString(), {
-						headers: { 'X-Admin-Key': key }
-					});
+					const res = await fetch('/api/statistics?' + params.toString());
 					const body = await res.json();
 
 					if (!res.ok || !body.success) {
@@ -281,13 +256,8 @@
 			loadBtn.addEventListener('click', () => loadPage(1));
 			prevBtn.addEventListener('click', () => { if (currentPage > 1) loadPage(currentPage - 1); });
 			nextBtn.addEventListener('click', () => { if (currentPage < totalPages) loadPage(currentPage + 1); });
-			forgetBtn.addEventListener('click', () => {
-				localStorage.removeItem(STORAGE_KEY);
-				adminKeyInput.value = '';
-				setStatus('Key forgotten.');
-			});
 
-			if (savedKey) loadPage(1);
+			loadPage(1);
 		})();
 	</script>
 </body>

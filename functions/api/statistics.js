@@ -1,9 +1,17 @@
 // POST  /api/statistics  -> game client submits a player powers/statistics snapshot
-// GET   /api/statistics  -> admin-only retrieval (requires X-Admin-Key header or ?key=)
+// GET   /api/statistics  -> public retrieval (no auth -- see note in handleGet)
 
 const MAX_BODY_BYTES = 100_000;       // hard cap on the whole request body
 const MAX_JSON_FIELD_BYTES = 20_000;  // cap on "powers" / "statistics" each, once serialized
 const MAX_STRING_LEN = 256;
+
+// Rate limiting: keyed by IP (from Cloudflare's CF-Connecting-IP header, which
+// the client cannot forge) rather than by fingerprint, since fingerprint is
+// arbitrary client-supplied data and a script could just send a new random
+// one on every request to dodge a per-fingerprint limit.
+const MIN_SECONDS_BETWEEN_SUBMISSIONS = 5;   // blocks rapid-fire spam (e.g. every scene change)
+const MAX_SUBMISSIONS_PER_WINDOW = 30;       // blocks sustained flooding
+const RATE_WINDOW_SECONDS = 600;             // ...within a 10 minute rolling window
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -12,7 +20,7 @@ export async function onRequest(context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
+    'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json'
   };
 
@@ -98,13 +106,40 @@ async function handlePost(request, env, headers) {
       return new Response(JSON.stringify({ error: '"powers"/"statistics" payload too large' }), { status: 413, headers });
     }
 
+    // --- rate limiting, keyed by the edge-verified client IP ---
+    const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const nowUnix = Math.floor(Date.now() / 1000);
+
+    const lastSubmission = await env.DB.prepare(
+      'SELECT received_unix FROM player_statistics WHERE ip = ? ORDER BY id DESC LIMIT 1'
+    ).bind(clientIp).first();
+
+    if (lastSubmission && (nowUnix - lastSubmission.received_unix) < MIN_SECONDS_BETWEEN_SUBMISSIONS) {
+      const retryAfter = MIN_SECONDS_BETWEEN_SUBMISSIONS - (nowUnix - lastSubmission.received_unix);
+      return new Response(
+        JSON.stringify({ error: 'Too many requests, slow down' }),
+        { status: 429, headers: { ...headers, 'Retry-After': String(retryAfter) } }
+      );
+    }
+
+    const windowCount = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM player_statistics WHERE ip = ? AND received_unix > ?'
+    ).bind(clientIp, nowUnix - RATE_WINDOW_SECONDS).first();
+
+    if ((windowCount?.count || 0) >= MAX_SUBMISSIONS_PER_WINDOW) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded, try again later' }),
+        { status: 429, headers: { ...headers, 'Retry-After': String(RATE_WINDOW_SECONDS) } }
+      );
+    }
+
     // Parameterized query: every value is bound, never string-concatenated into
     // the SQL text, so this is not vulnerable to SQL injection regardless of
     // what characters the client sends in fingerprint/datetime/JSON fields.
     const insertResult = await env.DB.prepare(
-      `INSERT INTO player_statistics (fingerprint, client_timestamp, client_datetime, powers, statistics)
-       VALUES (?, ?, ?, ?, ?)`
-    ).bind(fingerprint.trim(), timestampNum, datetime.trim(), powersJson, statisticsJson).run();
+      `INSERT INTO player_statistics (fingerprint, client_timestamp, client_datetime, powers, statistics, ip, received_unix)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(fingerprint.trim(), timestampNum, datetime.trim(), powersJson, statisticsJson, clientIp, nowUnix).run();
 
     return new Response(
       JSON.stringify({ success: true, id: insertResult.meta?.last_row_id || null }),
@@ -120,24 +155,10 @@ async function handlePost(request, env, headers) {
 }
 
 async function handleGet(request, env, url, headers) {
-  // This table stores per-device fingerprints and full player stat dumps, so
-  // unlike the public leaderboard it must not be readable by anyone who finds
-  // the URL. Require a server-side secret set via:
-  //   wrangler pages secret put STATS_ADMIN_KEY --project-name=plgames
-  const adminKey = env.STATS_ADMIN_KEY;
-  const providedKey = request.headers.get('X-Admin-Key') || url.searchParams.get('key') || '';
-
-  if (!adminKey) {
-    return new Response(
-      JSON.stringify({ error: 'Server is not configured with STATS_ADMIN_KEY' }),
-      { status: 500, headers }
-    );
-  }
-
-  if (providedKey !== adminKey) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-  }
-
+  // NOTE: this endpoint is intentionally public (no admin key) at the user's
+  // request, so anyone who knows/guesses this URL can read all fingerprints
+  // and player stat dumps. There is no per-row sensitive/secret data (no auth
+  // tokens, no purchase info) beyond the fingerprint + gameplay stats.
   try {
     const page = Math.max(parseInt(url.searchParams.get('page')) || 1, 1);
     const pageSize = Math.min(parseInt(url.searchParams.get('pageSize')) || 25, 100);
