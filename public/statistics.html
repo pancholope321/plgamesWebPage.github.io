@@ -7,16 +7,27 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Player Statistics</title>
 	<style>
+		:root {
+			--surface: #ffffff;
+			--page: rgba(240,240,250,1);
+			--ink-primary: #0b0b0b;
+			--ink-secondary: #52514e;
+			--ink-muted: #898781;
+			--grid: #e1e0d9;
+			--axis: #c3c2b7;
+			--bar: #2a78d6;
+			--bar-hover: #1c5cab;
+		}
 		body {
-			font-family: Satoshi, sans-serif;
+			font-family: Satoshi, system-ui, sans-serif;
 			margin: 0;
 			padding: 0;
-			background-color: rgba(240,240,250,1);
-			color: black;
+			background-color: var(--page);
+			color: var(--ink-primary);
 		}
 		header {
 			background: rgba(250,250,250,1);
-			color: black;
+			color: var(--ink-primary);
 			padding: 20px 10px;
 			text-align: center;
 			font-size: 32px;
@@ -24,12 +35,12 @@
 			border-bottom: 1px solid rgba(200,200,200,1);
 		}
 		.container {
-			max-width: 1100px;
+			max-width: 1200px;
 			margin: 0 auto;
 			padding: 20px;
 		}
 		.panel {
-			background: white;
+			background: var(--surface);
 			border-radius: 12px;
 			padding: 16px;
 			margin-bottom: 16px;
@@ -67,10 +78,119 @@
 			opacity: 0.5;
 			cursor: not-allowed;
 		}
+		#status {
+			font-size: 14px;
+			color: var(--ink-secondary);
+			min-height: 20px;
+		}
+		#status.error {
+			color: #b00020;
+		}
+
+		/* KPI tiles */
+		.kpi-row {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 12px;
+		}
+		.kpi-tile {
+			background: var(--surface);
+			border-radius: 12px;
+			padding: 16px;
+			box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+		}
+		.kpi-tile .label {
+			font-size: 13px;
+			color: var(--ink-secondary);
+			margin-bottom: 6px;
+		}
+		.kpi-tile .value {
+			font-size: 28px;
+			font-weight: 600;
+			color: var(--ink-primary);
+		}
+
+		/* Charts */
+		.charts-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+			gap: 16px;
+		}
+		.chart-panel h3 {
+			margin: 0 0 4px 0;
+			font-size: 16px;
+		}
+		.chart-note {
+			font-size: 12px;
+			color: var(--ink-muted);
+			margin: 0 0 8px 0;
+		}
+		.chart-svg-wrap {
+			position: relative;
+			width: 100%;
+			overflow-x: auto;
+		}
+		.chart-svg-wrap svg {
+			width: 100%;
+			height: auto;
+			display: block;
+		}
+		.bar-rect {
+			fill: var(--bar);
+			cursor: pointer;
+		}
+		.bar-rect:hover, .bar-rect:focus {
+			fill: var(--bar-hover);
+			outline: none;
+		}
+		.chart-label {
+			font-size: 11px;
+			fill: var(--ink-secondary);
+		}
+		.chart-value {
+			font-size: 11px;
+			fill: var(--ink-primary);
+			font-weight: 600;
+		}
+		.chart-tick {
+			font-size: 10px;
+			fill: var(--ink-muted);
+		}
+		.empty-note {
+			font-size: 13px;
+			color: var(--ink-muted);
+			padding: 12px 0;
+		}
+
+		/* Tooltip */
+		#chartTooltip {
+			position: fixed;
+			pointer-events: none;
+			background: var(--ink-primary);
+			color: white;
+			padding: 6px 10px;
+			border-radius: 6px;
+			font-size: 12px;
+			line-height: 1.4;
+			z-index: 50;
+			display: none;
+			max-width: 260px;
+		}
+		#chartTooltip .tt-value {
+			font-weight: 700;
+			display: block;
+		}
+		#chartTooltip .tt-label {
+			color: rgba(255,255,255,0.75);
+			display: block;
+			word-break: break-word;
+		}
+
+		/* Sessions table */
 		table {
 			width: 100%;
 			border-collapse: collapse;
-			font-size: 14px;
+			font-size: 13px;
 		}
 		th, td {
 			text-align: left;
@@ -81,31 +201,61 @@
 		}
 		th {
 			background: rgba(245,245,245,1);
+			position: sticky;
+			top: 0;
+		}
+		.table-scroll {
+			max-height: 520px;
+			overflow: auto;
+			border-radius: 8px;
+		}
+		.power-tag {
+			display: inline-block;
+			background: rgba(42,120,214,0.12);
+			color: #184f95;
+			border-radius: 999px;
+			padding: 2px 8px;
+			font-size: 11px;
+			margin: 2px 4px 2px 0;
+		}
+		.fingerprint-cell {
+			font-family: monospace;
+			font-size: 12px;
+		}
+
+		/* Modal */
+		dialog#detailModal {
+			border: none;
+			border-radius: 12px;
+			padding: 0;
+			max-width: 700px;
+			width: 90%;
+			max-height: 80vh;
+		}
+		dialog#detailModal::backdrop {
+			background: rgba(0,0,0,0.4);
+		}
+		.modal-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 14px 18px;
+			border-bottom: 1px solid rgba(230,230,230,1);
+		}
+		.modal-body {
+			padding: 14px 18px;
+			overflow: auto;
+			max-height: calc(80vh - 60px);
 		}
 		pre {
 			background: rgba(245,245,250,1);
 			border-radius: 6px;
 			padding: 8px;
 			font-size: 12px;
-			max-height: 240px;
+			max-height: 320px;
 			overflow: auto;
 			white-space: pre-wrap;
 			word-break: break-word;
-		}
-		#status {
-			font-size: 14px;
-			color: #444;
-			min-height: 20px;
-		}
-		#status.error {
-			color: #b00020;
-		}
-		.pagination {
-			display: flex;
-			gap: 10px;
-			align-items: center;
-			justify-content: center;
-			margin-top: 12px;
 		}
 	</style>
 </head>
@@ -115,149 +265,543 @@
 		<div class="panel">
 			<div class="controls">
 				<input type="text" id="fingerprintFilter" placeholder="Filter by fingerprint (optional)">
-				<select id="pageSize">
-					<option value="10">10 / page</option>
-					<option value="25" selected>25 / page</option>
-					<option value="50">50 / page</option>
-					<option value="100">100 / page</option>
-				</select>
 				<button id="loadBtn">Refresh</button>
 			</div>
 			<div id="status"></div>
 		</div>
 
+		<div class="kpi-row" id="kpiRow"></div>
+
+		<div class="charts-grid">
+			<div class="panel chart-panel">
+				<h3>Max day reached per player</h3>
+				<p class="chart-note">Highest PlayerEconomy.CurrentDay seen in any session, top players</p>
+				<div class="chart-svg-wrap"><svg id="chartMaxDay"></svg></div>
+			</div>
+			<div class="panel chart-panel">
+				<h3>Total playtime per player</h3>
+				<p class="chart-note">Sum of session durations (gap &gt; 20 min starts a new session), top players</p>
+				<div class="chart-svg-wrap"><svg id="chartPlaytime"></svg></div>
+			</div>
+			<div class="panel chart-panel">
+				<h3>Power usage frequency</h3>
+				<p class="chart-note">Sessions in which each power appeared in PowerOrder</p>
+				<div class="chart-svg-wrap"><svg id="chartPowers"></svg></div>
+			</div>
+		</div>
+
 		<div class="panel">
-			<table id="statsTable">
-				<thead>
-					<tr>
-						<th>ID</th>
-						<th>Fingerprint</th>
-						<th>Datetime</th>
-						<th>Received</th>
-						<th>Powers</th>
-						<th>Statistics</th>
-					</tr>
-				</thead>
-				<tbody id="statsBody"></tbody>
-			</table>
-			<div class="pagination">
-				<button id="prevBtn" class="secondary">Prev</button>
-				<span id="pageIndicator"></span>
-				<button id="nextBtn" class="secondary">Next</button>
+			<h3 style="margin-top:0">Sessions</h3>
+			<div class="table-scroll">
+				<table id="sessionsTable">
+					<thead>
+						<tr>
+							<th>Player</th>
+							<th>Start</th>
+							<th>Duration</th>
+							<th>Snapshots</th>
+							<th>Max Day</th>
+							<th>Due Date</th>
+							<th>Current Due</th>
+							<th>Tickets</th>
+							<th>Money</th>
+							<th>Powers used</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody id="sessionsBody"></tbody>
+				</table>
 			</div>
 		</div>
 	</div>
 
+	<div id="chartTooltip"></div>
+
+	<dialog id="detailModal">
+		<div class="modal-header">
+			<strong id="modalTitle">Session detail</strong>
+			<button class="secondary" id="modalCloseBtn">Close</button>
+		</div>
+		<div class="modal-body">
+			<p style="margin-top:0"><strong>Powers (last snapshot)</strong></p>
+			<pre id="modalPowers"></pre>
+			<p><strong>Statistics (last snapshot)</strong></p>
+			<pre id="modalStatistics"></pre>
+		</div>
+	</dialog>
+
 	<script>
 		(function () {
+			const SESSION_GAP_SECONDS = 20 * 60;
+			const SVG_NS = 'http://www.w3.org/2000/svg';
+
 			const fingerprintFilterInput = document.getElementById('fingerprintFilter');
-			const pageSizeSelect = document.getElementById('pageSize');
 			const loadBtn = document.getElementById('loadBtn');
 			const statusEl = document.getElementById('status');
-			const statsBody = document.getElementById('statsBody');
-			const prevBtn = document.getElementById('prevBtn');
-			const nextBtn = document.getElementById('nextBtn');
-			const pageIndicator = document.getElementById('pageIndicator');
+			const kpiRow = document.getElementById('kpiRow');
+			const sessionsBody = document.getElementById('sessionsBody');
+			const tooltip = document.getElementById('chartTooltip');
+			const modal = document.getElementById('detailModal');
+			const modalPowers = document.getElementById('modalPowers');
+			const modalStatistics = document.getElementById('modalStatistics');
+			const modalTitle = document.getElementById('modalTitle');
+			const modalCloseBtn = document.getElementById('modalCloseBtn');
 
-			let currentPage = 1;
-			let totalPages = 1;
+			let allSessions = [];
+
+			modalCloseBtn.addEventListener('click', () => modal.close());
 
 			function setStatus(message, isError) {
 				statusEl.textContent = message || '';
 				statusEl.classList.toggle('error', Boolean(isError));
 			}
 
-			function clearTable() {
-				while (statsBody.firstChild) {
-					statsBody.removeChild(statsBody.firstChild);
-				}
+			function num(value, fallback) {
+				const n = Number(value);
+				return Number.isFinite(n) ? n : (fallback === undefined ? 0 : fallback);
 			}
 
-			function formatDate(unixSeconds) {
-				if (typeof unixSeconds !== 'number' || !isFinite(unixSeconds)) return '';
+			// --- fetch every page from the GET endpoint into one array ---
+			async function fetchAllRows() {
+				const rows = [];
+				let page = 1;
+				const pageSize = 100;
+				while (true) {
+					const res = await fetch('/api/statistics?page=' + page + '&pageSize=' + pageSize);
+					const body = await res.json();
+					if (!res.ok || !body.success) {
+						throw new Error(body.error || ('Request failed (' + res.status + ')'));
+					}
+					rows.push(...body.data);
+					if (!body.pagination.hasNext) break;
+					page += 1;
+				}
+				return rows;
+			}
+
+			// --- group each player's snapshots into sessions; a gap over 20
+			// minutes between two consecutive snapshots starts a new session ---
+			function buildSessions(rows) {
+				const byFingerprint = new Map();
+				for (const row of rows) {
+					if (!row || typeof row.fingerprint !== 'string') continue;
+					if (!byFingerprint.has(row.fingerprint)) byFingerprint.set(row.fingerprint, []);
+					byFingerprint.get(row.fingerprint).push(row);
+				}
+
+				const sessions = [];
+
+				for (const [fingerprint, snapshots] of byFingerprint) {
+					snapshots.sort((a, b) => num(a.timestamp) - num(b.timestamp));
+
+					let current = null;
+					let lastTimestamp = null;
+
+					for (const snap of snapshots) {
+						const ts = num(snap.timestamp);
+						if (current === null || (ts - lastTimestamp) > SESSION_GAP_SECONDS) {
+							current = { fingerprint, snapshots: [] };
+							sessions.push(current);
+						}
+						current.snapshots.push(snap);
+						lastTimestamp = ts;
+					}
+				}
+
+				return sessions.map(summarizeSession);
+			}
+
+			function summarizeSession(session) {
+				let maxCurrentDay = 0, maxDueDate = 0, maxCurrentDueDate = 0, maxTickets = 0, maxMoney = 0;
+				const powerSet = new Set();
+
+				const timestamps = session.snapshots.map(s => num(s.timestamp));
+				const start = Math.min(...timestamps);
+				const end = Math.max(...timestamps);
+
+				for (const snap of session.snapshots) {
+					const powers = snap.powers || {};
+					const economy = powers.PlayerEconomy || {};
+
+					maxCurrentDay = Math.max(maxCurrentDay, num(economy.CurrentDay));
+					maxDueDate = Math.max(maxDueDate, num(economy.DueDate));
+					maxCurrentDueDate = Math.max(maxCurrentDueDate, num(economy.Current_due_date));
+					maxTickets = Math.max(maxTickets, num(powers.Tickets, num(economy.Tickets)));
+					maxMoney = Math.max(maxMoney, num(economy.Money));
+
+					const order = Array.isArray(powers.PowerOrder) ? powers.PowerOrder : [];
+					for (const p of order) {
+						if (typeof p === 'string' && p.trim() !== '') powerSet.add(p);
+					}
+				}
+
+				const lastSnapshot = session.snapshots[session.snapshots.length - 1];
+
+				return {
+					fingerprint: session.fingerprint,
+					start,
+					end,
+					durationSeconds: Math.max(end - start, 0),
+					snapshotCount: session.snapshots.length,
+					maxCurrentDay,
+					maxDueDate,
+					maxCurrentDueDate,
+					maxTickets,
+					maxMoney,
+					powers: Array.from(powerSet),
+					lastPowersRaw: lastSnapshot ? lastSnapshot.powers : null,
+					lastStatisticsRaw: lastSnapshot ? lastSnapshot.statistics : null
+				};
+			}
+
+			function aggregateByPlayer(sessions) {
+				const map = new Map();
+				for (const s of sessions) {
+					if (!map.has(s.fingerprint)) {
+						map.set(s.fingerprint, { fingerprint: s.fingerprint, sessionCount: 0, totalPlaytime: 0, maxCurrentDay: 0 });
+					}
+					const agg = map.get(s.fingerprint);
+					agg.sessionCount += 1;
+					agg.totalPlaytime += s.durationSeconds;
+					agg.maxCurrentDay = Math.max(agg.maxCurrentDay, s.maxCurrentDay);
+				}
+				return Array.from(map.values());
+			}
+
+			function powersFrequency(sessions) {
+				const counts = new Map();
+				for (const s of sessions) {
+					for (const p of s.powers) {
+						counts.set(p, (counts.get(p) || 0) + 1);
+					}
+				}
+				return Array.from(counts.entries())
+					.map(([name, count]) => ({ name, count }))
+					.sort((a, b) => b.count - a.count);
+			}
+
+			function shortFingerprint(fp) {
+				if (typeof fp !== 'string') return '';
+				return fp.length > 10 ? fp.slice(0, 10) + '…' : fp;
+			}
+
+			function formatDuration(seconds) {
+				if (!Number.isFinite(seconds) || seconds <= 0) return '<1m';
+				const h = Math.floor(seconds / 3600);
+				const m = Math.round((seconds % 3600) / 60);
+				if (h > 0) return h + 'h ' + m + 'm';
+				if (m > 0) return m + 'm';
+				return '<1m';
+			}
+
+			function formatDateTime(unixSeconds) {
+				if (!Number.isFinite(unixSeconds)) return '';
 				return new Date(unixSeconds * 1000).toLocaleString();
 			}
 
-			// Every piece of server data is inserted with textContent, never
-			// innerHTML/insertAdjacentHTML — this is what actually prevents
-			// stored XSS even if a malicious client ever managed to submit a
-			// fingerprint or stat value containing "<script>" or similar.
-			function renderRows(rows) {
-				clearTable();
+			// --- KPI tiles ---
+			function renderKPIs(sessions, playerAgg) {
+				while (kpiRow.firstChild) kpiRow.removeChild(kpiRow.firstChild);
 
-				for (const row of rows) {
-					const tr = document.createElement('tr');
+				const totalPlaytime = sessions.reduce((sum, s) => sum + s.durationSeconds, 0);
+				const avgSession = sessions.length ? totalPlaytime / sessions.length : 0;
 
-					const cells = [
-						String(row.id ?? ''),
-						row.fingerprint ?? '',
-						row.datetime ?? '',
-						row.createdAt ?? formatDate(row.timestamp)
-					];
+				const tiles = [
+					{ label: 'Players', value: String(playerAgg.length) },
+					{ label: 'Sessions', value: String(sessions.length) },
+					{ label: 'Total playtime tracked', value: formatDuration(totalPlaytime) },
+					{ label: 'Avg. session length', value: formatDuration(avgSession) }
+				];
 
-					for (const cellText of cells) {
-						const td = document.createElement('td');
-						td.textContent = cellText;
-						tr.appendChild(td);
-					}
-
-					const powersTd = document.createElement('td');
-					const powersPre = document.createElement('pre');
-					powersPre.textContent = JSON.stringify(row.powers ?? {}, null, 2);
-					powersTd.appendChild(powersPre);
-					tr.appendChild(powersTd);
-
-					const statsTd = document.createElement('td');
-					const statsPre = document.createElement('pre');
-					statsPre.textContent = JSON.stringify(row.statistics ?? {}, null, 2);
-					statsTd.appendChild(statsPre);
-					tr.appendChild(statsTd);
-
-					statsBody.appendChild(tr);
+				for (const tile of tiles) {
+					const div = document.createElement('div');
+					div.className = 'kpi-tile';
+					const label = document.createElement('div');
+					label.className = 'label';
+					label.textContent = tile.label;
+					const value = document.createElement('div');
+					value.className = 'value';
+					value.textContent = tile.value;
+					div.appendChild(label);
+					div.appendChild(value);
+					kpiRow.appendChild(div);
 				}
 			}
 
-			async function loadPage(page) {
-				const pageSize = pageSizeSelect.value;
-				const fingerprint = fingerprintFilterInput.value.trim();
+			// --- nice round tick values for an axis, e.g. 0,25,50,75,100 ---
+			function niceMax(value) {
+				if (value <= 0) return 1;
+				const exponent = Math.floor(Math.log10(value));
+				const fraction = value / Math.pow(10, exponent);
+				let niceFraction;
+				if (fraction <= 1) niceFraction = 1;
+				else if (fraction <= 2) niceFraction = 2;
+				else if (fraction <= 5) niceFraction = 5;
+				else niceFraction = 10;
+				return niceFraction * Math.pow(10, exponent);
+			}
 
-				const params = new URLSearchParams({ page: String(page), pageSize });
-				if (fingerprint) params.set('fingerprint', fingerprint);
+			function buildTicks(maxValue, count) {
+				const domainMax = niceMax(maxValue);
+				const step = domainMax / count;
+				const ticks = [];
+				for (let i = 0; i <= count; i++) ticks.push(step * i);
+				return { ticks, domainMax };
+			}
 
-				setStatus('Loading...');
-				loadBtn.disabled = true;
+			// path for a horizontal bar: rounded right end (the data-end),
+			// square left end (the baseline) -- per the mark spec
+			function roundedBarPath(x, y, width, height, radius) {
+				if (width <= 0) return '';
+				const r = Math.min(radius, height / 2, width);
+				return [
+					'M', x, y,
+					'H', x + width - r,
+					'A', r, r, 0, 0, 1, x + width, y + r,
+					'V', y + height - r,
+					'A', r, r, 0, 0, 1, x + width - r, y + height,
+					'H', x,
+					'Z'
+				].join(' ');
+			}
 
-				try {
-					const res = await fetch('/api/statistics?' + params.toString());
-					const body = await res.json();
+			function showTooltip(evt, valueText, labelText) {
+				const valueEl = document.createElement('span');
+				valueEl.className = 'tt-value';
+				valueEl.textContent = valueText;
+				const labelEl = document.createElement('span');
+				labelEl.className = 'tt-label';
+				labelEl.textContent = labelText;
 
-					if (!res.ok || !body.success) {
-						setStatus(body.error || ('Request failed (' + res.status + ')'), true);
-						clearTable();
-						pageIndicator.textContent = '';
-						return;
+				while (tooltip.firstChild) tooltip.removeChild(tooltip.firstChild);
+				tooltip.appendChild(valueEl);
+				tooltip.appendChild(labelEl);
+
+				tooltip.style.display = 'block';
+				const x = (evt.clientX || 0) + 14;
+				const y = (evt.clientY || 0) + 14;
+				tooltip.style.left = x + 'px';
+				tooltip.style.top = y + 'px';
+			}
+
+			function hideTooltip() {
+				tooltip.style.display = 'none';
+			}
+
+			// Generic single-series horizontal bar chart. items: [{ label, fullLabel, value }]
+			function renderHBarChart(svgEl, items, formatValue) {
+				while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+
+				if (!items.length) {
+					svgEl.setAttribute('viewBox', '0 0 100 40');
+					const text = document.createElementNS(SVG_NS, 'text');
+					text.setAttribute('x', 4);
+					text.setAttribute('y', 20);
+					text.setAttribute('class', 'chart-note');
+					text.textContent = 'No data yet';
+					svgEl.appendChild(text);
+					return;
+				}
+
+				const barHeight = 18;
+				const rowGap = 12;
+				const rowHeight = barHeight + rowGap;
+				const labelWidth = 100;
+				const width = 560;
+				const topPad = 8;
+				const bottomAxisHeight = 20;
+				const rightPad = 56;
+				const plotWidth = width - labelWidth - rightPad;
+				const height = items.length * rowHeight + topPad + bottomAxisHeight;
+
+				const maxValue = Math.max(...items.map(i => i.value), 0);
+				const { ticks, domainMax } = buildTicks(maxValue, 4);
+
+				svgEl.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+
+				// gridlines
+				for (const t of ticks) {
+					const x = labelWidth + (domainMax > 0 ? (t / domainMax) * plotWidth : 0);
+					const line = document.createElementNS(SVG_NS, 'line');
+					line.setAttribute('x1', x);
+					line.setAttribute('x2', x);
+					line.setAttribute('y1', topPad);
+					line.setAttribute('y2', height - bottomAxisHeight);
+					line.setAttribute('stroke', 'var(--grid)');
+					line.setAttribute('stroke-width', '1');
+					svgEl.appendChild(line);
+
+					const tickText = document.createElementNS(SVG_NS, 'text');
+					tickText.setAttribute('x', x);
+					tickText.setAttribute('y', height - 4);
+					tickText.setAttribute('text-anchor', 'middle');
+					tickText.setAttribute('class', 'chart-tick');
+					tickText.textContent = formatValue(t);
+					svgEl.appendChild(tickText);
+				}
+
+				items.forEach((item, i) => {
+					const y = topPad + i * rowHeight;
+					const barWidth = domainMax > 0 ? (item.value / domainMax) * plotWidth : 0;
+					const x = labelWidth;
+
+					const label = document.createElementNS(SVG_NS, 'text');
+					label.setAttribute('x', labelWidth - 8);
+					label.setAttribute('y', y + barHeight * 0.75);
+					label.setAttribute('text-anchor', 'end');
+					label.setAttribute('class', 'chart-label');
+					label.textContent = item.label;
+					const titleEl = document.createElementNS(SVG_NS, 'title');
+					titleEl.textContent = item.fullLabel || item.label;
+					label.appendChild(titleEl);
+					svgEl.appendChild(label);
+
+					const path = document.createElementNS(SVG_NS, 'path');
+					path.setAttribute('d', roundedBarPath(x, y, barWidth, barHeight, 4));
+					path.setAttribute('class', 'bar-rect');
+					path.setAttribute('tabindex', '0');
+
+					const valueText = formatValue(item.value);
+					const fullLabel = item.fullLabel || item.label;
+
+					path.addEventListener('pointermove', (evt) => showTooltip(evt, valueText, fullLabel));
+					path.addEventListener('pointerenter', (evt) => showTooltip(evt, valueText, fullLabel));
+					path.addEventListener('pointerleave', hideTooltip);
+					path.addEventListener('focus', (evt) => showTooltip({ clientX: x + barWidth, clientY: y }, valueText, fullLabel));
+					path.addEventListener('blur', hideTooltip);
+
+					svgEl.appendChild(path);
+
+					const valueLabel = document.createElementNS(SVG_NS, 'text');
+					valueLabel.setAttribute('x', x + barWidth + 6);
+					valueLabel.setAttribute('y', y + barHeight * 0.75);
+					valueLabel.setAttribute('class', 'chart-value');
+					valueLabel.textContent = valueText;
+					svgEl.appendChild(valueLabel);
+				});
+			}
+
+			function renderCharts(sessions, playerAgg) {
+				const byMaxDay = [...playerAgg].sort((a, b) => b.maxCurrentDay - a.maxCurrentDay).slice(0, 15);
+				renderHBarChart(
+					document.getElementById('chartMaxDay'),
+					byMaxDay.map(p => ({ label: shortFingerprint(p.fingerprint), fullLabel: p.fingerprint, value: p.maxCurrentDay })),
+					(v) => 'Day ' + Math.round(v)
+				);
+
+				const byPlaytime = [...playerAgg].sort((a, b) => b.totalPlaytime - a.totalPlaytime).slice(0, 15);
+				renderHBarChart(
+					document.getElementById('chartPlaytime'),
+					byPlaytime.map(p => ({ label: shortFingerprint(p.fingerprint), fullLabel: p.fingerprint, value: p.totalPlaytime })),
+					(v) => formatDuration(v)
+				);
+
+				const powerFreq = powersFrequency(sessions).slice(0, 15);
+				renderHBarChart(
+					document.getElementById('chartPowers'),
+					powerFreq.map(p => ({ label: p.name.length > 14 ? p.name.slice(0, 14) + '…' : p.name, fullLabel: p.name, value: p.count })),
+					(v) => String(Math.round(v))
+				);
+			}
+
+			function renderPowerTags(cell, powers) {
+				while (cell.firstChild) cell.removeChild(cell.firstChild);
+				if (!powers.length) {
+					cell.textContent = '—';
+					return;
+				}
+				for (const p of powers) {
+					const tag = document.createElement('span');
+					tag.className = 'power-tag';
+					tag.textContent = p;
+					cell.appendChild(tag);
+				}
+			}
+
+			function renderSessionsTable(sessions) {
+				while (sessionsBody.firstChild) sessionsBody.removeChild(sessionsBody.firstChild);
+
+				const sorted = [...sessions].sort((a, b) => b.start - a.start);
+
+				for (const session of sorted) {
+					const tr = document.createElement('tr');
+
+					const fpCell = document.createElement('td');
+					fpCell.className = 'fingerprint-cell';
+					fpCell.textContent = shortFingerprint(session.fingerprint);
+					fpCell.title = session.fingerprint;
+					tr.appendChild(fpCell);
+
+					const cells = [
+						formatDateTime(session.start),
+						formatDuration(session.durationSeconds),
+						String(session.snapshotCount),
+						String(session.maxCurrentDay),
+						String(session.maxDueDate),
+						String(session.maxCurrentDueDate),
+						String(session.maxTickets),
+						String(session.maxMoney)
+					];
+					for (const val of cells) {
+						const td = document.createElement('td');
+						td.textContent = val;
+						tr.appendChild(td);
 					}
 
-					currentPage = body.pagination.page;
-					totalPages = body.pagination.totalPages;
-					pageIndicator.textContent = 'Page ' + currentPage + ' / ' + totalPages + ' (' + body.pagination.total + ' rows)';
-					prevBtn.disabled = !body.pagination.hasPrevious;
-					nextBtn.disabled = !body.pagination.hasNext;
+					const powersCell = document.createElement('td');
+					renderPowerTags(powersCell, session.powers);
+					tr.appendChild(powersCell);
 
-					renderRows(body.data);
-					setStatus(body.data.length + ' record(s) loaded.');
+					const actionCell = document.createElement('td');
+					const detailBtn = document.createElement('button');
+					detailBtn.className = 'secondary';
+					detailBtn.textContent = 'Details';
+					detailBtn.addEventListener('click', () => openDetail(session));
+					actionCell.appendChild(detailBtn);
+					tr.appendChild(actionCell);
+
+					sessionsBody.appendChild(tr);
+				}
+			}
+
+			function openDetail(session) {
+				modalTitle.textContent = shortFingerprint(session.fingerprint) + ' — ' + formatDateTime(session.start);
+				modalPowers.textContent = JSON.stringify(session.lastPowersRaw || {}, null, 2);
+				modalStatistics.textContent = JSON.stringify(session.lastStatisticsRaw || {}, null, 2);
+				modal.showModal();
+			}
+
+			function applyFilterAndRender() {
+				const filter = fingerprintFilterInput.value.trim().toLowerCase();
+				const filtered = filter
+					? allSessions.filter(s => s.fingerprint.toLowerCase().includes(filter))
+					: allSessions;
+
+				const playerAgg = aggregateByPlayer(filtered);
+				renderKPIs(filtered, playerAgg);
+				renderCharts(filtered, playerAgg);
+				renderSessionsTable(filtered);
+			}
+
+			async function loadAll() {
+				setStatus('Loading...');
+				loadBtn.disabled = true;
+				try {
+					const rows = await fetchAllRows();
+					allSessions = buildSessions(rows);
+					applyFilterAndRender();
+					setStatus(rows.length + ' snapshot(s) loaded, ' + allSessions.length + ' session(s) built.');
 				} catch (err) {
-					setStatus('Network error: ' + err.message, true);
+					setStatus('Error: ' + err.message, true);
 				} finally {
 					loadBtn.disabled = false;
 				}
 			}
 
-			loadBtn.addEventListener('click', () => loadPage(1));
-			prevBtn.addEventListener('click', () => { if (currentPage > 1) loadPage(currentPage - 1); });
-			nextBtn.addEventListener('click', () => { if (currentPage < totalPages) loadPage(currentPage + 1); });
+			loadBtn.addEventListener('click', loadAll);
+			fingerprintFilterInput.addEventListener('input', applyFilterAndRender);
 
-			loadPage(1);
+			loadAll();
 		})();
 	</script>
 </body>
