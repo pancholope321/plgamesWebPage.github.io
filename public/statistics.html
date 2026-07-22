@@ -285,7 +285,7 @@
 			</div>
 			<div class="panel chart-panel">
 				<h3>Power usage frequency</h3>
-				<p class="chart-note">Sessions in which each power appeared in PowerOrder</p>
+				<p class="chart-note">Sessions in which each power appeared in Power_1..Power_8</p>
 				<div class="chart-svg-wrap"><svg id="chartPowers"></svg></div>
 			</div>
 		</div>
@@ -429,9 +429,12 @@
 					maxTickets = Math.max(maxTickets, num(powers.Tickets, num(economy.Tickets)));
 					maxMoney = Math.max(maxMoney, num(economy.Money));
 
-					const order = Array.isArray(powers.PowerOrder) ? powers.PowerOrder : [];
-					for (const p of order) {
-						if (typeof p === 'string' && p.trim() !== '') powerSet.add(p);
+					for (let slot = 1; slot <= 8; slot++) {
+						const slotPowers = powers['Power_' + slot];
+						if (!Array.isArray(slotPowers)) continue;
+						for (const p of slotPowers) {
+							if (typeof p === 'string' && p.trim() !== '') powerSet.add(p);
+						}
 					}
 				}
 
