@@ -43,6 +43,25 @@ function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+// Some Godot save/serialization paths hand off a Dictionary that's already
+// been through JSON.stringify() once (e.g. it was loaded from a save file as
+// a JSON string rather than kept as a live Dictionary), so it arrives here
+// double-encoded: a JSON string *containing* the object, not the object
+// itself. Accept that shape too and parse it through, rather than rejecting
+// otherwise-valid data.
+function coerceToObject(value) {
+  if (isPlainObject(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (isPlainObject(parsed)) return parsed;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 async function handlePost(request, env, headers) {
   // Same origin policy as the other submit endpoints: only the itch.io-hosted
   // game (or localhost during development) may write to this table.
@@ -91,16 +110,18 @@ async function handlePost(request, env, headers) {
       return new Response(JSON.stringify({ error: 'Valid "datetime" is required' }), { status: 400, headers });
     }
 
-    if (!isPlainObject(powers)) {
-      return new Response(JSON.stringify({ error: '"powers" must be an object' }), { status: 400, headers });
+    const powersObj = coerceToObject(powers);
+    if (!powersObj) {
+      return new Response(JSON.stringify({ error: '"powers" must be an object or a JSON-encoded object string' }), { status: 400, headers });
     }
 
-    if (!isPlainObject(statistics)) {
-      return new Response(JSON.stringify({ error: '"statistics" must be an object' }), { status: 400, headers });
+    const statisticsObj = coerceToObject(statistics);
+    if (!statisticsObj) {
+      return new Response(JSON.stringify({ error: '"statistics" must be an object or a JSON-encoded object string' }), { status: 400, headers });
     }
 
-    const powersJson = JSON.stringify(powers);
-    const statisticsJson = JSON.stringify(statistics);
+    const powersJson = JSON.stringify(powersObj);
+    const statisticsJson = JSON.stringify(statisticsObj);
 
     if (powersJson.length > MAX_JSON_FIELD_BYTES || statisticsJson.length > MAX_JSON_FIELD_BYTES) {
       return new Response(JSON.stringify({ error: '"powers"/"statistics" payload too large' }), { status: 413, headers });
