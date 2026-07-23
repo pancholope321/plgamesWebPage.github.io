@@ -76,7 +76,8 @@ export async function onRequest(context) {
         summarized_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
       `CREATE INDEX IF NOT EXISTS idx_player_sessions_fingerprint ON player_sessions(fingerprint)`,
-      `CREATE INDEX IF NOT EXISTS idx_player_sessions_start ON player_sessions(session_start)`
+      `CREATE INDEX IF NOT EXISTS idx_player_sessions_start ON player_sessions(session_start)`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_player_sessions_unique ON player_sessions(fingerprint, session_start, session_end)`
     ];
 
     await env.DB.batch(statements.map(sql => env.DB.prepare(sql)));

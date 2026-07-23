@@ -18,10 +18,30 @@
 
 const SESSION_GAP_SECONDS = 20 * 60;
 const MAX_FINGERPRINTS_PER_RUN = 200;
+const MAX_IDS_PER_STATEMENT = 100; // D1/SQLite caps bound parameters per statement
+
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
+// The D1 binding in this Worker's dashboard settings is named "env.DB"
+// (literally, dot included) rather than "DB". That's not standard Cloudflare
+// convention -- normally you'd name the binding "DB" and reference it in
+// code as env.DB, where ".DB" is just JS property-dot-access, not part of
+// the name. But since the binding here really is named "env.DB", plain dot
+// notation (env.DB) looks for a property literally called "DB" and won't
+// find it; bracket notation is required: env["env.DB"].
+function getDb(env) {
+  return env['env.DB'];
+}
 
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(summarizeSessions(env));
+    ctx.waitUntil(summarizeSessions(getDb(env)));
   },
 
   async fetch(request, env) {
@@ -37,16 +57,28 @@ export default {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
     }
 
-    const result = await summarizeSessions(env);
-    return new Response(JSON.stringify(result), { status: 200, headers });
+    const db = getDb(env);
+    if (!db) {
+      return new Response(JSON.stringify({
+        error: '"env.DB" binding is not bound on this Worker',
+        availableEnvKeys: Object.keys(env)
+      }), { status: 500, headers });
+    }
+
+    try {
+      const result = await summarizeSessions(db);
+      return new Response(JSON.stringify(result), { status: 200, headers });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message, stack: err.stack }), { status: 500, headers });
+    }
   }
 };
 
-async function summarizeSessions(env) {
+async function summarizeSessions(db) {
   const nowUnix = Math.floor(Date.now() / 1000);
   const openThreshold = nowUnix - SESSION_GAP_SECONDS;
 
-  const fpResult = await env.DB.prepare(
+  const fpResult = await db.prepare(
     'SELECT DISTINCT fingerprint FROM player_statistics WHERE session_processed = 0 LIMIT ?'
   ).bind(MAX_FINGERPRINTS_PER_RUN).all();
 
@@ -57,7 +89,7 @@ async function summarizeSessions(env) {
   const statements = [];
 
   for (const fingerprint of fingerprints) {
-    const rowsResult = await env.DB.prepare(
+    const rowsResult = await db.prepare(
       `SELECT id, client_timestamp, powers FROM player_statistics
        WHERE fingerprint = ? AND session_processed = 0
        ORDER BY client_timestamp ASC`
@@ -91,8 +123,12 @@ async function summarizeSessions(env) {
 
       const summary = summarizeSession(run);
 
-      statements.push(env.DB.prepare(
-        `INSERT INTO player_sessions
+      // INSERT OR IGNORE + the unique index on (fingerprint, session_start, session_end)
+      // (see migration notes) makes this safe against double-processing -- if this exact
+      // session was already summarized by another run (e.g. an overlapping manual trigger),
+      // the insert is a silent no-op instead of creating a duplicate row.
+      statements.push(db.prepare(
+        `INSERT OR IGNORE INTO player_sessions
           (fingerprint, session_start, session_end, duration_seconds, snapshot_count,
            max_day, max_due_date, max_current_due_date, max_tickets, max_money,
            powers_on_max_day, retries, games_won, games_lost)
@@ -104,16 +140,18 @@ async function summarizeSessions(env) {
       ));
 
       const ids = run.map(r => r.id);
-      statements.push(env.DB.prepare(
-        `UPDATE player_statistics SET session_processed = 1 WHERE id IN (${ids.map(() => '?').join(',')})`
-      ).bind(...ids));
+      for (const idChunk of chunkArray(ids, MAX_IDS_PER_STATEMENT)) {
+        statements.push(db.prepare(
+          `UPDATE player_statistics SET session_processed = 1 WHERE id IN (${idChunk.map(() => '?').join(',')})`
+        ).bind(...idChunk));
+      }
 
       sessionsFinalized += 1;
     });
   }
 
   if (statements.length) {
-    await env.DB.batch(statements);
+    await db.batch(statements);
   }
 
   return {

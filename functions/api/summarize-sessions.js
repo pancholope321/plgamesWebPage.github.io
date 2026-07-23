@@ -16,6 +16,15 @@
 
 const SESSION_GAP_SECONDS = 20 * 60;
 const MAX_FINGERPRINTS_PER_RUN = 200;
+const MAX_IDS_PER_STATEMENT = 100; // D1/SQLite caps bound parameters per statement
+
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -87,7 +96,7 @@ export async function onRequest(context) {
         const summary = summarizeSession(run);
 
         statements.push(env.DB.prepare(
-          `INSERT INTO player_sessions
+          `INSERT OR IGNORE INTO player_sessions
             (fingerprint, session_start, session_end, duration_seconds, snapshot_count,
              max_day, max_due_date, max_current_due_date, max_tickets, max_money,
              powers_on_max_day, retries, games_won, games_lost)
@@ -99,9 +108,11 @@ export async function onRequest(context) {
         ));
 
         const ids = run.map(r => r.id);
-        statements.push(env.DB.prepare(
-          `UPDATE player_statistics SET session_processed = 1 WHERE id IN (${ids.map(() => '?').join(',')})`
-        ).bind(...ids));
+        for (const idChunk of chunkArray(ids, MAX_IDS_PER_STATEMENT)) {
+          statements.push(env.DB.prepare(
+            `UPDATE player_statistics SET session_processed = 1 WHERE id IN (${idChunk.map(() => '?').join(',')})`
+          ).bind(...idChunk));
+        }
 
         sessionsFinalized += 1;
       });
