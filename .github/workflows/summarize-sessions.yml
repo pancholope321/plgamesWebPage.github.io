@@ -15,5 +15,5 @@ jobs:
         env:
           CRON_SECRET: ${{ secrets.STATS_CRON_SECRET }}
         run: |
-          curl -sf -X POST "https://plgames.cl/api/summarize-sessions" \
+          curl -sf -L --post301 --post302 --post303 -X POST "https://www.plgames.cl/api/summarize-sessions" \
             -H "X-Cron-Secret: $CRON_SECRET"
