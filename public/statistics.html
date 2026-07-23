@@ -232,7 +232,7 @@
 		}
 		th:last-child, td:last-child {
 			white-space: normal;
-			word-break: break-word;
+			max-width: 240px;
 		}
 		th {
 			background: rgba(245,245,245,1);
@@ -250,6 +250,13 @@
 				max-height: 420px;
 			}
 		}
+		.power-tags {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 4px;
+			max-height: 100px;
+			overflow-y: auto;
+		}
 		.power-tag {
 			display: inline-block;
 			background: rgba(42,120,214,0.12);
@@ -257,7 +264,7 @@
 			border-radius: 999px;
 			padding: 2px 8px;
 			font-size: 11px;
-			margin: 2px 4px 2px 0;
+			white-space: nowrap;
 		}
 		.fingerprint-cell {
 			font-family: monospace;
@@ -656,12 +663,15 @@
 					cell.textContent = '—';
 					return;
 				}
+				const wrap = document.createElement('div');
+				wrap.className = 'power-tags';
 				for (const p of powers) {
 					const tag = document.createElement('span');
 					tag.className = 'power-tag';
 					tag.textContent = p;
-					cell.appendChild(tag);
+					wrap.appendChild(tag);
 				}
+				cell.appendChild(wrap);
 			}
 
 			function renderSessionsTable(sessions) {
