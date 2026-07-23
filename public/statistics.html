@@ -90,7 +90,7 @@
 		/* KPI tiles */
 		.kpi-row {
 			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 			gap: 12px;
 		}
 		.kpi-tile {
@@ -105,7 +105,7 @@
 			margin-bottom: 6px;
 		}
 		.kpi-tile .value {
-			font-size: 28px;
+			font-size: 26px;
 			font-weight: 600;
 			color: var(--ink-primary);
 		}
@@ -155,11 +155,6 @@
 		.chart-tick {
 			font-size: 10px;
 			fill: var(--ink-muted);
-		}
-		.empty-note {
-			font-size: 13px;
-			color: var(--ink-muted);
-			padding: 12px 0;
 		}
 
 		/* Tooltip */
@@ -222,41 +217,6 @@
 			font-family: monospace;
 			font-size: 12px;
 		}
-
-		/* Modal */
-		dialog#detailModal {
-			border: none;
-			border-radius: 12px;
-			padding: 0;
-			max-width: 700px;
-			width: 90%;
-			max-height: 80vh;
-		}
-		dialog#detailModal::backdrop {
-			background: rgba(0,0,0,0.4);
-		}
-		.modal-header {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			padding: 14px 18px;
-			border-bottom: 1px solid rgba(230,230,230,1);
-		}
-		.modal-body {
-			padding: 14px 18px;
-			overflow: auto;
-			max-height: calc(80vh - 60px);
-		}
-		pre {
-			background: rgba(245,245,250,1);
-			border-radius: 6px;
-			padding: 8px;
-			font-size: 12px;
-			max-height: 320px;
-			overflow: auto;
-			white-space: pre-wrap;
-			word-break: break-word;
-		}
 	</style>
 </head>
 <body>
@@ -268,25 +228,30 @@
 				<button id="loadBtn">Refresh</button>
 			</div>
 			<div id="status"></div>
+			<p class="chart-note" style="margin-top:8px">
+				Sessions are summarized server-side twice a day (see /api/summarize-sessions), not recomputed
+				from raw snapshots on every page load. If you just played, your latest session won't appear
+				here until the next scheduled run picks it up -- that can take up to ~12 hours.
+			</p>
 		</div>
 
 		<div class="kpi-row" id="kpiRow"></div>
 
 		<div class="charts-grid">
 			<div class="panel chart-panel">
-				<h3>Max day reached per player</h3>
-				<p class="chart-note">Highest PlayerEconomy.CurrentDay seen in any session, top players</p>
-				<div class="chart-svg-wrap"><svg id="chartMaxDay"></svg></div>
+				<h3>Max day reached — distribution</h3>
+				<p class="chart-note">How many sessions topped out at each PlayerEconomy.CurrentDay value</p>
+				<div class="chart-svg-wrap"><svg id="chartDayDist"></svg></div>
 			</div>
 			<div class="panel chart-panel">
-				<h3>Total playtime per player</h3>
-				<p class="chart-note">Sum of session durations (gap &gt; 20 min starts a new session), top players</p>
-				<div class="chart-svg-wrap"><svg id="chartPlaytime"></svg></div>
+				<h3>Session length — distribution</h3>
+				<p class="chart-note">How long sessions tend to run (gap &gt; 20 min starts a new session)</p>
+				<div class="chart-svg-wrap"><svg id="chartDurationDist"></svg></div>
 			</div>
 			<div class="panel chart-panel">
-				<h3>Power usage frequency</h3>
-				<p class="chart-note">Sessions in which each power appeared in Power_1..Power_8</p>
-				<div class="chart-svg-wrap"><svg id="chartPowers"></svg></div>
+				<h3>Powers used on max day — frequency</h3>
+				<p class="chart-note">Powers active (Power_1..Power_8) on the snapshot where each session's max day was reached</p>
+				<div class="chart-svg-wrap"><svg id="chartPowersFreq"></svg></div>
 			</div>
 		</div>
 
@@ -305,8 +270,10 @@
 							<th>Current Due</th>
 							<th>Tickets</th>
 							<th>Money</th>
-							<th>Powers used</th>
-							<th></th>
+							<th>Retries</th>
+							<th>Won</th>
+							<th>Lost</th>
+							<th>Powers on max day</th>
 						</tr>
 					</thead>
 					<tbody id="sessionsBody"></tbody>
@@ -317,22 +284,8 @@
 
 	<div id="chartTooltip"></div>
 
-	<dialog id="detailModal">
-		<div class="modal-header">
-			<strong id="modalTitle">Session detail</strong>
-			<button class="secondary" id="modalCloseBtn">Close</button>
-		</div>
-		<div class="modal-body">
-			<p style="margin-top:0"><strong>Powers (last snapshot)</strong></p>
-			<pre id="modalPowers"></pre>
-			<p><strong>Statistics (last snapshot)</strong></p>
-			<pre id="modalStatistics"></pre>
-		</div>
-	</dialog>
-
 	<script>
 		(function () {
-			const SESSION_GAP_SECONDS = 20 * 60;
 			const SVG_NS = 'http://www.w3.org/2000/svg';
 
 			const fingerprintFilterInput = document.getElementById('fingerprintFilter');
@@ -341,15 +294,8 @@
 			const kpiRow = document.getElementById('kpiRow');
 			const sessionsBody = document.getElementById('sessionsBody');
 			const tooltip = document.getElementById('chartTooltip');
-			const modal = document.getElementById('detailModal');
-			const modalPowers = document.getElementById('modalPowers');
-			const modalStatistics = document.getElementById('modalStatistics');
-			const modalTitle = document.getElementById('modalTitle');
-			const modalCloseBtn = document.getElementById('modalCloseBtn');
 
 			let allSessions = [];
-
-			modalCloseBtn.addEventListener('click', () => modal.close());
 
 			function setStatus(message, isError) {
 				statusEl.textContent = message || '';
@@ -361,13 +307,13 @@
 				return Number.isFinite(n) ? n : (fallback === undefined ? 0 : fallback);
 			}
 
-			// --- fetch every page from the GET endpoint into one array ---
-			async function fetchAllRows() {
+			// --- fetch every page from the precomputed sessions endpoint ---
+			async function fetchAllSessions() {
 				const rows = [];
 				let page = 1;
 				const pageSize = 100;
 				while (true) {
-					const res = await fetch('/api/statistics?page=' + page + '&pageSize=' + pageSize);
+					const res = await fetch('/api/sessions?page=' + page + '&pageSize=' + pageSize);
 					const body = await res.json();
 					if (!res.ok || !body.success) {
 						throw new Error(body.error || ('Request failed (' + res.status + ')'));
@@ -377,110 +323,6 @@
 					page += 1;
 				}
 				return rows;
-			}
-
-			// --- group each player's snapshots into sessions; a gap over 20
-			// minutes between two consecutive snapshots starts a new session ---
-			function buildSessions(rows) {
-				const byFingerprint = new Map();
-				for (const row of rows) {
-					if (!row || typeof row.fingerprint !== 'string') continue;
-					if (!byFingerprint.has(row.fingerprint)) byFingerprint.set(row.fingerprint, []);
-					byFingerprint.get(row.fingerprint).push(row);
-				}
-
-				const sessions = [];
-
-				for (const [fingerprint, snapshots] of byFingerprint) {
-					snapshots.sort((a, b) => num(a.timestamp) - num(b.timestamp));
-
-					let current = null;
-					let lastTimestamp = null;
-
-					for (const snap of snapshots) {
-						const ts = num(snap.timestamp);
-						if (current === null || (ts - lastTimestamp) > SESSION_GAP_SECONDS) {
-							current = { fingerprint, snapshots: [] };
-							sessions.push(current);
-						}
-						current.snapshots.push(snap);
-						lastTimestamp = ts;
-					}
-				}
-
-				return sessions.map(summarizeSession);
-			}
-
-			function summarizeSession(session) {
-				let maxCurrentDay = 0, maxDueDate = 0, maxCurrentDueDate = 0, maxTickets = 0, maxMoney = 0;
-				const powerSet = new Set();
-
-				const timestamps = session.snapshots.map(s => num(s.timestamp));
-				const start = Math.min(...timestamps);
-				const end = Math.max(...timestamps);
-
-				for (const snap of session.snapshots) {
-					const powers = snap.powers || {};
-					const economy = powers.PlayerEconomy || {};
-
-					maxCurrentDay = Math.max(maxCurrentDay, num(economy.CurrentDay));
-					maxDueDate = Math.max(maxDueDate, num(economy.DueDate));
-					maxCurrentDueDate = Math.max(maxCurrentDueDate, num(economy.Current_due_date));
-					maxTickets = Math.max(maxTickets, num(powers.Tickets, num(economy.Tickets)));
-					maxMoney = Math.max(maxMoney, num(economy.Money));
-
-					for (let slot = 1; slot <= 8; slot++) {
-						const slotPowers = powers['Power_' + slot];
-						if (!Array.isArray(slotPowers)) continue;
-						for (const p of slotPowers) {
-							if (typeof p === 'string' && p.trim() !== '') powerSet.add(p);
-						}
-					}
-				}
-
-				const lastSnapshot = session.snapshots[session.snapshots.length - 1];
-
-				return {
-					fingerprint: session.fingerprint,
-					start,
-					end,
-					durationSeconds: Math.max(end - start, 0),
-					snapshotCount: session.snapshots.length,
-					maxCurrentDay,
-					maxDueDate,
-					maxCurrentDueDate,
-					maxTickets,
-					maxMoney,
-					powers: Array.from(powerSet),
-					lastPowersRaw: lastSnapshot ? lastSnapshot.powers : null,
-					lastStatisticsRaw: lastSnapshot ? lastSnapshot.statistics : null
-				};
-			}
-
-			function aggregateByPlayer(sessions) {
-				const map = new Map();
-				for (const s of sessions) {
-					if (!map.has(s.fingerprint)) {
-						map.set(s.fingerprint, { fingerprint: s.fingerprint, sessionCount: 0, totalPlaytime: 0, maxCurrentDay: 0 });
-					}
-					const agg = map.get(s.fingerprint);
-					agg.sessionCount += 1;
-					agg.totalPlaytime += s.durationSeconds;
-					agg.maxCurrentDay = Math.max(agg.maxCurrentDay, s.maxCurrentDay);
-				}
-				return Array.from(map.values());
-			}
-
-			function powersFrequency(sessions) {
-				const counts = new Map();
-				for (const s of sessions) {
-					for (const p of s.powers) {
-						counts.set(p, (counts.get(p) || 0) + 1);
-					}
-				}
-				return Array.from(counts.entries())
-					.map(([name, count]) => ({ name, count }))
-					.sort((a, b) => b.count - a.count);
 			}
 
 			function shortFingerprint(fp) {
@@ -503,17 +345,24 @@
 			}
 
 			// --- KPI tiles ---
-			function renderKPIs(sessions, playerAgg) {
+			function renderKPIs(sessions) {
 				while (kpiRow.firstChild) kpiRow.removeChild(kpiRow.firstChild);
 
-				const totalPlaytime = sessions.reduce((sum, s) => sum + s.durationSeconds, 0);
+				const players = new Set(sessions.map(s => s.fingerprint)).size;
+				const totalPlaytime = sessions.reduce((sum, s) => sum + num(s.durationSeconds), 0);
 				const avgSession = sessions.length ? totalPlaytime / sessions.length : 0;
+				const totalWins = sessions.reduce((sum, s) => sum + num(s.gamesWon), 0);
+				const totalRetries = sessions.reduce((sum, s) => sum + num(s.retries), 0);
+				const winRate = sessions.length ? (totalWins / sessions.length) * 100 : 0;
 
 				const tiles = [
-					{ label: 'Players', value: String(playerAgg.length) },
+					{ label: 'Players', value: String(players) },
 					{ label: 'Sessions', value: String(sessions.length) },
 					{ label: 'Total playtime tracked', value: formatDuration(totalPlaytime) },
-					{ label: 'Avg. session length', value: formatDuration(avgSession) }
+					{ label: 'Avg. session length', value: formatDuration(avgSession) },
+					{ label: 'Total games won', value: String(totalWins) },
+					{ label: 'Total retries', value: String(totalRetries) },
+					{ label: 'Win rate (per session)', value: winRate.toFixed(1) + '%' }
 				];
 
 				for (const tile of tiles) {
@@ -684,24 +533,69 @@
 				});
 			}
 
-			function renderCharts(sessions, playerAgg) {
-				const byMaxDay = [...playerAgg].sort((a, b) => b.maxCurrentDay - a.maxCurrentDay).slice(0, 15);
+			// One bucket per exact day value (0, 1, 2, ...) -- CurrentDay is a
+			// small integer in this game, so binned ranges would lose precision
+			// for no benefit.
+			function buildDayDistribution(sessions) {
+				const counts = new Map();
+				for (const s of sessions) {
+					const day = Math.round(num(s.maxDay));
+					counts.set(day, (counts.get(day) || 0) + 1);
+				}
+				return Array.from(counts.entries())
+					.sort((a, b) => a[0] - b[0])
+					.map(([day, count]) => ({ label: 'Day ' + day, fullLabel: 'Day ' + day, value: count }));
+			}
+
+			const DURATION_BUCKETS = [
+				{ max: 60, label: '<1m' },
+				{ max: 300, label: '1-5m' },
+				{ max: 900, label: '5-15m' },
+				{ max: 1800, label: '15-30m' },
+				{ max: 3600, label: '30-60m' },
+				{ max: Infinity, label: '60m+' }
+			];
+
+			function buildDurationDistribution(sessions) {
+				const counts = DURATION_BUCKETS.map(() => 0);
+				for (const s of sessions) {
+					const d = num(s.durationSeconds);
+					const idx = DURATION_BUCKETS.findIndex(b => d < b.max);
+					counts[idx === -1 ? DURATION_BUCKETS.length - 1 : idx] += 1;
+				}
+				return DURATION_BUCKETS.map((b, i) => ({ label: b.label, fullLabel: b.label, value: counts[i] }));
+			}
+
+			function powersOnMaxDayFrequency(sessions) {
+				const counts = new Map();
+				for (const s of sessions) {
+					const powers = Array.isArray(s.powersOnMaxDay) ? s.powersOnMaxDay : [];
+					for (const p of powers) {
+						if (typeof p !== 'string' || !p.trim()) continue;
+						counts.set(p, (counts.get(p) || 0) + 1);
+					}
+				}
+				return Array.from(counts.entries())
+					.map(([name, count]) => ({ name, count }))
+					.sort((a, b) => b.count - a.count);
+			}
+
+			function renderCharts(sessions) {
 				renderHBarChart(
-					document.getElementById('chartMaxDay'),
-					byMaxDay.map(p => ({ label: shortFingerprint(p.fingerprint), fullLabel: p.fingerprint, value: p.maxCurrentDay })),
-					(v) => 'Day ' + Math.round(v)
+					document.getElementById('chartDayDist'),
+					buildDayDistribution(sessions),
+					(v) => String(Math.round(v))
 				);
 
-				const byPlaytime = [...playerAgg].sort((a, b) => b.totalPlaytime - a.totalPlaytime).slice(0, 15);
 				renderHBarChart(
-					document.getElementById('chartPlaytime'),
-					byPlaytime.map(p => ({ label: shortFingerprint(p.fingerprint), fullLabel: p.fingerprint, value: p.totalPlaytime })),
-					(v) => formatDuration(v)
+					document.getElementById('chartDurationDist'),
+					buildDurationDistribution(sessions),
+					(v) => String(Math.round(v))
 				);
 
-				const powerFreq = powersFrequency(sessions).slice(0, 15);
+				const powerFreq = powersOnMaxDayFrequency(sessions).slice(0, 15);
 				renderHBarChart(
-					document.getElementById('chartPowers'),
+					document.getElementById('chartPowersFreq'),
 					powerFreq.map(p => ({ label: p.name.length > 14 ? p.name.slice(0, 14) + '…' : p.name, fullLabel: p.name, value: p.count })),
 					(v) => String(Math.round(v))
 				);
@@ -724,7 +618,7 @@
 			function renderSessionsTable(sessions) {
 				while (sessionsBody.firstChild) sessionsBody.removeChild(sessionsBody.firstChild);
 
-				const sorted = [...sessions].sort((a, b) => b.start - a.start);
+				const sorted = [...sessions].sort((a, b) => num(b.start) - num(a.start));
 
 				for (const session of sorted) {
 					const tr = document.createElement('tr');
@@ -739,11 +633,14 @@
 						formatDateTime(session.start),
 						formatDuration(session.durationSeconds),
 						String(session.snapshotCount),
-						String(session.maxCurrentDay),
+						String(session.maxDay),
 						String(session.maxDueDate),
 						String(session.maxCurrentDueDate),
 						String(session.maxTickets),
-						String(session.maxMoney)
+						String(session.maxMoney),
+						String(session.retries),
+						String(session.gamesWon),
+						String(session.gamesLost)
 					];
 					for (const val of cells) {
 						const td = document.createElement('td');
@@ -752,26 +649,11 @@
 					}
 
 					const powersCell = document.createElement('td');
-					renderPowerTags(powersCell, session.powers);
+					renderPowerTags(powersCell, Array.isArray(session.powersOnMaxDay) ? session.powersOnMaxDay : []);
 					tr.appendChild(powersCell);
-
-					const actionCell = document.createElement('td');
-					const detailBtn = document.createElement('button');
-					detailBtn.className = 'secondary';
-					detailBtn.textContent = 'Details';
-					detailBtn.addEventListener('click', () => openDetail(session));
-					actionCell.appendChild(detailBtn);
-					tr.appendChild(actionCell);
 
 					sessionsBody.appendChild(tr);
 				}
-			}
-
-			function openDetail(session) {
-				modalTitle.textContent = shortFingerprint(session.fingerprint) + ' — ' + formatDateTime(session.start);
-				modalPowers.textContent = JSON.stringify(session.lastPowersRaw || {}, null, 2);
-				modalStatistics.textContent = JSON.stringify(session.lastStatisticsRaw || {}, null, 2);
-				modal.showModal();
 			}
 
 			function applyFilterAndRender() {
@@ -780,9 +662,8 @@
 					? allSessions.filter(s => s.fingerprint.toLowerCase().includes(filter))
 					: allSessions;
 
-				const playerAgg = aggregateByPlayer(filtered);
-				renderKPIs(filtered, playerAgg);
-				renderCharts(filtered, playerAgg);
+				renderKPIs(filtered);
+				renderCharts(filtered);
 				renderSessionsTable(filtered);
 			}
 
@@ -790,10 +671,9 @@
 				setStatus('Loading...');
 				loadBtn.disabled = true;
 				try {
-					const rows = await fetchAllRows();
-					allSessions = buildSessions(rows);
+					allSessions = await fetchAllSessions();
 					applyFilterAndRender();
-					setStatus(rows.length + ' snapshot(s) loaded, ' + allSessions.length + ' session(s) built.');
+					setStatus(allSessions.length + ' session(s) loaded.');
 				} catch (err) {
 					setStatus('Error: ' + err.message, true);
 				} finally {

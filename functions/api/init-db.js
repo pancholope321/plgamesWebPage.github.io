@@ -50,11 +50,33 @@ export async function onRequest(context) {
         statistics TEXT NOT NULL,
         ip TEXT,
         received_unix INTEGER NOT NULL DEFAULT 0,
+        session_processed INTEGER NOT NULL DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
       `CREATE INDEX IF NOT EXISTS idx_player_statistics_fingerprint ON player_statistics(fingerprint)`,
       `CREATE INDEX IF NOT EXISTS idx_player_statistics_created_at ON player_statistics(created_at)`,
-      `CREATE INDEX IF NOT EXISTS idx_player_statistics_ip_time ON player_statistics(ip, received_unix)`
+      `CREATE INDEX IF NOT EXISTS idx_player_statistics_ip_time ON player_statistics(ip, received_unix)`,
+      `CREATE INDEX IF NOT EXISTS idx_player_statistics_unprocessed ON player_statistics(fingerprint, session_processed, client_timestamp)`,
+      `CREATE TABLE IF NOT EXISTS player_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fingerprint TEXT NOT NULL,
+        session_start REAL NOT NULL,
+        session_end REAL NOT NULL,
+        duration_seconds REAL NOT NULL,
+        snapshot_count INTEGER NOT NULL,
+        max_day INTEGER NOT NULL DEFAULT 0,
+        max_due_date INTEGER NOT NULL DEFAULT 0,
+        max_current_due_date INTEGER NOT NULL DEFAULT 0,
+        max_tickets INTEGER NOT NULL DEFAULT 0,
+        max_money INTEGER NOT NULL DEFAULT 0,
+        powers_on_max_day TEXT NOT NULL DEFAULT '[]',
+        retries INTEGER NOT NULL DEFAULT 0,
+        games_won INTEGER NOT NULL DEFAULT 0,
+        games_lost INTEGER NOT NULL DEFAULT 0,
+        summarized_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_player_sessions_fingerprint ON player_sessions(fingerprint)`,
+      `CREATE INDEX IF NOT EXISTS idx_player_sessions_start ON player_sessions(session_start)`
     ];
 
     await env.DB.batch(statements.map(sql => env.DB.prepare(sql)));
