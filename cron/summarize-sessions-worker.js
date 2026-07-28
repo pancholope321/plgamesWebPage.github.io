@@ -42,6 +42,7 @@ function getDb(env) {
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(summarizeSessions(getDb(env)));
+    console.log(event.scheduledTime);
   },
 
   async fetch(request, env) {
@@ -116,6 +117,9 @@ async function summarizeSessions(db) {
       const isLast = index === runs.length - 1;
       const lastTs = Number(run[run.length - 1].client_timestamp);
 
+      console.log("lastTs");
+      console.log(lastTs);
+      console.log("openThreshold: ",openThreshold);
       if (isLast && lastTs > openThreshold) {
         sessionsStillOpen += 1;
         return;
@@ -154,6 +158,13 @@ async function summarizeSessions(db) {
     await db.batch(statements);
   }
 
+  const exit_dir = {
+    success: true,
+    fingerprintsScanned: fingerprints.length,
+    sessionsFinalizedKey: sessionsFinalized,
+    sessionsStillOpenkey: sessionsStillOpen
+  };
+  console.log("exit_dir: ",exit_dir);
   return {
     success: true,
     fingerprintsScanned: fingerprints.length,
@@ -236,3 +247,4 @@ function summarizeSession(rows) {
     powersOnMaxDay, retries, gamesWon, gamesLost
   };
 }
+
